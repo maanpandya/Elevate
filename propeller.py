@@ -1,10 +1,9 @@
 import numpy as np
-from AirfoildataGenerator import get_aifoildata
+from AirfoilData import get_aifoildata
+import time
 
-# question = ('Cd', 'Cl', 'ClCd', 'AlphaClCd', 'ClCdmax')
-# re_angs = [[10**5, 5]]
-# answer = get_aifoildata('NACA 2412', re_angs, question)
-# print(answer)
+#Measure start time:
+start_time = time.time()
 
 # Global Inputs
 power = 52199
@@ -14,6 +13,7 @@ dia_hub = 0.3
 nr_blades = 2
 a = 340
 mach_tip = 2400 * diameter * np.pi / 60 / a      # No more than 0.6 to reduce noise.
+foil = 'NACA 4415'
 
 rho = 1.225
 dyn_viscosity = 1.789e-5
@@ -21,11 +21,10 @@ kin_viscosity = dyn_viscosity/rho
 
 # Program Inputs
 nr_sect = 6
+zeta_acc = 0.001
 zeta = 1
 zeta_prev = 0
-zeta_acc = 0.01
 Re = np.full(nr_sect, 100000)
-foil = 'NACA 2412'
 
 # Calculations
 radius = diameter/2
@@ -53,7 +52,6 @@ while abs(zeta_prev/zeta - 1) >= zeta_acc:
     Wc = 4 * np.pi * v_ratio * circulation * velocity * radius * zeta / (cl * nr_blades)
     Re_prv = Re
     Re = Wc / kin_viscosity
-    print('ReRatio', Re_prv/(Re+1))             #Fix this!!!
     param1 = 1 - cdcl * np.tan(flow_angle)
     param2 = 1 + cdcl / np.tan(flow_angle)
     ax_interf = zeta / 2 * (np.cos(flow_angle))**2 * param1
@@ -74,28 +72,11 @@ while abs(zeta_prev/zeta - 1) >= zeta_acc:
 
     zeta_prev = zeta
     zeta = -J1 / (2 * J2) + np.sqrt((J1 / (2 * J2))**2 + power_coef / J2)
-    print('DzRatio', zeta_prev/zeta)
 
-
+print(f'Convergence reached! ({(time.time() - start_time)} seconds)\nZetaRatio; {zeta_prev/zeta} ReRatio; {Re_prv/(Re+0.01)}')
 
 thrust_coef = I1 * zeta + I2 * zeta**2
 power_coef = J1*zeta + J2*zeta**2
 prop_efficiency = thrust_coef / power_coef
-print('Final Design:\nTwists;', twist, '\nChords;', c, '\nEfficiency;', prop_efficiency)
+print('Final Design:\nSections;', sections,'\nTwists;', twist, '\nChords;', c, '\nEfficiency;', prop_efficiency)
 solidarity = nr_blades*c/(2*np.pi*radius)
-
-
-
-# if data:
-#     npdata = np.array(data)
-#     n = 0
-#     for i in np.arange(angles[0], angles[1], angles[2]):
-#         if round(i, 4) not in np.around(npdata[:, 0], 4):
-#             print(round(i, 4))
-#             n += 1
-#     print('Rate:', 1-(n/len(np.arange(angles[0], angles[1], angles[2]))))
-# else:
-#     print('error!')
-# print(data)
-
-# W = velocity*(1 + a)/np.sin(flow_angle)
