@@ -2,7 +2,7 @@ import numpy as np
 import scipy.interpolate as interp
 import matplotlib.pyplot as plt
 import os
-# from parapy.lib.xfoil import run_xfoil
+from parapy.lib.xfoil import run_xfoil
 try:
     import cPickle as pickle
 except ImportError:
