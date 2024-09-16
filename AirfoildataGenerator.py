@@ -122,6 +122,7 @@ def get_aifoildata(foil, re_angs, query):
         make_airfoildata(foil, foilpath, angles, re_nrs, True)
 
     re_angs = np.array(re_angs)
+    #print(re_angs)
     re_angs[:, 0] = np.log10(re_angs[:, 0])
 
     with open('AirfoilData/' + foilpath + '/area_func.pkl', 'rb') as file:
