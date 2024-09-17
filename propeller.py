@@ -49,8 +49,9 @@ while abs(zeta_prev/(zeta+0.0001) - 1) >= zeta_acc:
 
     re_angs = np.insert(np.expand_dims(Re, axis=1), 1, np.zeros((1, nr_sect)), axis=1)
     re_angs[-1, 0] = 100000
-    data = get_aifoildata(foil, re_angs, ('AlphaClCd', 'ClCdmaxCl', 'ClCdmax'))
+    data = get_aifoildata(foil, re_angs, ('Cl', 'Cd'))
     alpha, cl, cdcl = np.radians(data[:, 0]), data[:, 1], 1/data[:, 2]
+    cd0=cdcl*cl
 
     Wc = 4 * np.pi * v_ratio * G * V * R * zeta / (cl * B)
     Re_prv = Re
