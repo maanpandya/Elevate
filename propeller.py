@@ -1,15 +1,16 @@
 import numpy as np
 from AirfoilData import get_aifoildata
 import time
+import matplotlib.pyplot as plt
 
 #Measure start time:
 start_time = time.time()
 
 # Global Inputs
 power = 52199
-velocity = 49.17        # 10 m/s at hover according to https://www.scopus.com/inward/record.uri?eid=2-s2.0-85119987670&doi=10.3390%2fapp112311083&partnerID=40&md5=1aa6253871a54672b3f55d84f0cce64f (p11)
-diameter = 0.3 * 5.75
-dia_hub = 0.3
+velocity = 49.1744       # 10 m/s at hover according to https://www.scopus.com/inward/record.uri?eid=2-s2.0-85119987670&doi=10.3390%2fapp112311083&partnerID=40&md5=1aa6253871a54672b3f55d84f0cce64f (p11)
+diameter = 0.3048 * 5.75
+dia_hub = 0.3048
 nr_blades = 2
 a = 340
 mach_tip = 2400 * diameter * np.pi / 60 / a      # No more than 0.6 to reduce noise.
@@ -20,7 +21,7 @@ dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
 
 # Program Inputs
-nr_sect = 6
+nr_sect = 100
 zeta_acc = 0.001
 zeta = 1
 zeta_prev = 0
@@ -41,8 +42,9 @@ while abs(zeta_prev/zeta - 1) >= zeta_acc:
     f = (nr_blades/2)*(1-nd_radius)/np.sin(flow_angle_tip)
     F = (2/np.pi)*np.arccos(np.exp(-f))
     flow_angle = np.arctan2(np.tan(flow_angle_tip), nd_radius)
-    circulation = F * np.cos(flow_angle) * np.sin(flow_angle)
     x = ang_velocity * sections / velocity
+    circulation = F * x * np.cos(flow_angle) * np.sin(flow_angle)
+
 
     re_angs = np.insert(np.expand_dims(Re, axis=1), 1, np.zeros((1, nr_sect)), axis=1)
     re_angs[-1, 0] = 100000
@@ -75,8 +77,10 @@ while abs(zeta_prev/zeta - 1) >= zeta_acc:
 
 print(f'Convergence reached! ({(time.time() - start_time)} seconds)\nZetaRatio; {zeta_prev/zeta} ReRatio; {Re_prv/(Re+0.01)}')
 
-thrust_coef = I1 * zeta + I2 * zeta**2
-power_coef = J1*zeta + J2*zeta**2
+thrust_coef = I1 * zeta - I2 * zeta**2
+#power_coef = J1*zeta + J2*zeta**2
 prop_efficiency = thrust_coef / power_coef
 print('Final Design:\nSections;', sections,'\nTwists;', twist, '\nChords;', c, '\nEfficiency;', prop_efficiency)
 solidarity = nr_blades*c/(2*np.pi*radius)
+plt.plot(sections, c*cl)
+plt.show()
