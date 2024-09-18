@@ -22,7 +22,7 @@ print("the motor mass is:" ,motor_mass)
 #graph
 
 # Read the CSV with specific delimiter
-data = pd.read_csv(r'C:\Users\Gebruiker\Desktop\motor comparison(Sheet1).csv', delimiter=';', encoding='ISO-8859-1')
+data = pd.read_csv(r'C:\Users\Gebruiker\Desktop\Elevate\Elevate\DriveTrain_scripts\motor comparison(Sheet1).csv', delimiter=';', encoding='ISO-8859-1')
 
 # Extract columns
 Names = data.iloc[6:44, 9]  # Column K 
