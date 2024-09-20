@@ -14,7 +14,7 @@ beam_width = 0.07  # [m]
 lug_thickness = 0.01  # [m]
 bearing_thickness = 0.01  # [m]
 beam_length = 2  # [m]
-thrust = 1000  # [N]
+thrust = 600  # [N]
 bolt_head_height = 0.01  # [m]
 nut_height = 0.01  # [m]
 E_mod = 73.1 *10**9 # [Pa]
@@ -95,7 +95,7 @@ print(Area_bolt_head,"\n", side_length_bolt_head)
 
 # Force on thread
 F_thread=thrust*safety_factor
-Area_bolt_thread = F_thread/yield_strength
+Area_bolt_thread=F_thread/(yield_strength/10**6)
 height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
 #Area_bolt_thread=F_thread/(0.9*345)
 #height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
