@@ -14,7 +14,7 @@ beam_width = 0.07  # [m]
 lug_thickness = 0.01  # [m]
 bearing_thickness = 0.01  # [m]
 beam_length = 2  # [m]
-thrust = 200  # [N]
+thrust = 1000  # [N]
 bolt_head_height = 0.01  # [m]
 nut_height = 0.01  # [m]
 E_mod = 73.1 *10**9 # [Pa]
@@ -76,13 +76,27 @@ max_moment = max(y_moment)
 
 # Calculate diameter of bolt required to support the shear force * safety factor
 diameter_bolt_shear = np.sqrt(16 * max_shear * safety_factor / (3 * np.pi * shear_strength))
-diamter_bolt_bending = (32*max_moment*safety_factor/(np.pi*yield_strength))**(1/3)
+diameter_bolt_bending = (32*max_moment*safety_factor/(np.pi*yield_strength))**(1/3)
 
 
 print(f'The maximum internal shear force is {max_shear:.2f} N')
 print(f'The maximum internal bending moment is {max_moment:.2f} Nm')
 print(f'The required bolt diameter to support the shear force is {diameter_bolt_shear*1000:.3g} mm')
-print(f'The required bolt diameter to support the bending moment is {diamter_bolt_bending*1000:.3g} mm')
+print(f'The required bolt diameter to support the bending moment is {diameter_bolt_bending*1000:.3g} mm')
 
 
+# Calculate the thread and head dimensions
+# Force on head of bolt
+F_head=thrust*safety_factor
+Area_bolt_head = F_head/yield_strength
+side_length_bolt_head=np.sqrt(Area_bolt_head/(3*np.sqrt(3)/2))
+print(Area_bolt_head,"\n", side_length_bolt_head)
 
+
+# Force on thread
+F_thread=thrust*safety_factor
+Area_bolt_thread = F_thread/yield_strength
+height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
+#Area_bolt_thread=F_thread/(0.9*345)
+#height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
+print(Area_bolt_thread,"\n", height_bolt_thread)
