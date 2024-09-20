@@ -20,7 +20,8 @@ def powers(D, T, V, theta):
 
     nr_sect = 100
     zeta_acc = 0.001
-    zeta = 0.1
+    V_displ=20
+    zeta = V_displ/V
     zeta_prev = 0
     Re = np.full(nr_sect, 100000)
 
@@ -35,10 +36,12 @@ def powers(D, T, V, theta):
 
     while abs(zeta_prev/zeta - 1) >= zeta_acc:
         phi_tip = np.arctan2(v_ratio*(1+zeta/2), 1)
+        #print(phi_tip)
         f = (B/2)*(1-xi)/np.sin(phi_tip)
         F = (2/np.pi)*np.arccos(np.exp(-f))
         #F=np.array([1]*nr_sect)
         phi = np.arctan2(np.tan(phi_tip), xi)
+        #print(phi)
         x = omega * r / V
         G = F * x * np.cos(phi) * np.sin(phi)
         gamma=2*np.pi*V**2*zeta*G/(B*omega)
@@ -65,14 +68,22 @@ def powers(D, T, V, theta):
         re_angs[-1, 0] = 100000
         data = get_aifoildata(foil, re_angs, ('AlphaClCd', 'ClCdmaxCl', 'ClCdmax'))
         alpha, cl, cdcl = np.radians(data[:, 0]), data[:, 1], 1/data[:, 2]
+        #print(cl)
 
         Wc = 4 * np.pi * v_ratio * G * V * R * zeta / (cl * B)
+        #print(Wc)
         Re_prv = Re
         Re = Wc / kin_viscosity
+        #print(Re)
         param1 = 1 - cdcl * np.tan(phi)
         param2 = 1 + cdcl / np.tan(phi)
         ax_interf = zeta / 2 * (np.cos(phi))**2 * param1
+        ax_interf_slope=[(ax_interf[1]-ax_interf[0])/dr]
+        for i in range(nr_sect-2):
+            ax_interf_slope.append((ax_interf[i+1]-ax_interf[i])/(1*dr))
+        ax_interf_slope.append((ax_interf[-1]-ax_interf[-2])/dr)
         rot_interf = zeta / (2 * x) * np.cos(phi) * np.sin(phi) * param2
+        #print(ax_interf)
         W = V * (1 + ax_interf) / np.sin(phi)
         c = Wc / W
         alpha_ind=V_ind/W
@@ -90,18 +101,20 @@ def powers(D, T, V, theta):
 
         zeta_prev = zeta
         zeta = I1/(2*I2)-np.sqrt((I1/(2*I2))**2-T_c/I2)
+        print(zeta)
 
     #print(f'Convergence reached! ({(time.time() - start_time)} seconds)\nZetaRatio; {zeta_prev/zeta} ReRatio; {Re_prv/(Re+0.01)}')
 
     P_c = J1*zeta + J2*zeta**2
     P=P_c*rho*V**3*np.pi*R**2/2
     prop_efficiency = T_c / P_c
-    #print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
+    print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
     solidarity = B*c/(2*np.pi*R)
-    plt.plot(r, alpha_ind)
-    plt.show()
+    #plt.plot(r, ax_interf)
+    #plt.plot(r, rot_interf)
+    #plt.show()
     return P
 
-print(powers(D=0.3048 * 5.75, T=923.49528, V=50, theta=0))
+print(powers(D=0.3048 * 5.75, T=923.49528, V=0.001, theta=0))
 
 
