@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 
 ''' Assumptions (yes, there are loads):
 - beam only connects to pin via 2 bearings
-- bearings can only take transverse loads (perpendicular to it's axis)
+- bearings can only take transverse loads (perpendicular to it's axis) and not axial loads
 - point forces between bearings and pin and between pin and lugs at half the bearing/lug thickness
 - cylindrical pin
+ - ... more ...
 
 '''
 
@@ -21,7 +22,6 @@ E_mod = 73.1 *10**9 # [Pa]
 shear_strength = 235 * 10**6  # [Pa]
 yield_strength = 345 * 10**6  # [Pa]
 safety_factor = 2 # [-]
-
 
 # Calculate other parameters
 total_bolt_length = 2 * lug_thickness + beam_width + bolt_head_height + nut_height
@@ -94,9 +94,11 @@ print(Area_bolt_head,"\n", side_length_bolt_head)
 
 
 # Force on thread
-F_thread=thrust*safety_factor
-Area_bolt_thread=F_thread/(yield_strength/10**6)
-height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
-#Area_bolt_thread=F_thread/(0.9*345)
-#height_bolt_thread=Area_bolt_thread/(np.pi*diameter_bolt_bending)
-print(Area_bolt_thread,"\n", height_bolt_thread)
+F_thread = thrust * safety_factor
+Area_bolt_thread = F_thread / (yield_strength / 10**6)
+height_bolt_thread = Area_bolt_thread / (np.pi * diameter_bolt_bending)
+# Area_bolt_thread = F_thread / (0.9 * 345)
+# height_bolt_thread = Area_bolt_thread / (np.pi * diameter_bolt_bending)
+
+print(f"Area of the bolt thread: {Area_bolt_thread:.2f} mm^2")
+print(f"Height of the bolt thread: {height_bolt_thread:.2f} mm")
