@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 - bearings can only take transverse loads (perpendicular to it's axis) and not axial loads
 - point forces between bearings and pin and between pin and lugs at half the bearing/lug thickness
 - cylindrical pin
+- same material for both the lug and the bolt
  - ... more ...
 
 '''
@@ -24,6 +25,20 @@ shear_strength = 235 * 10**6  # [Pa]
 yield_strength = 345 * 10**6  # [Pa]
 safety_factor = 2 # [-]
 center_lug_hole = 0.04 # [m]
+thread_height = 0.03 # [m]
+
+# This will determine the thread engagement ratio: length of thread engagement=thread_engagement_ratio*diameter_thread
+
+Material = "Aluminium" # Steel or Aluminium
+if Material == "Steel":
+    thread_engagement_ratio = 1
+elif Material == "Aluminium":
+    thread_engagement_ratio = 2
+
+# Calculate the pitch of the thread
+screw_thread_pitch=0.007 # [m]
+pitch_circle_diameter_thread=diameter_pin-0.64952*screw_thread_pitch # [m]
+print(pitch_circle_diameter_thread)
 
 # Calculate bolt diameter based on internal bencing and shear forces
 def calculate_bolt_parameters(thrust, safety_factor, beam_length, beam_width, lug_thickness, bolt_head_height, nut_height, bearing_thickness, shear_strength, yield_strength):
@@ -93,6 +108,7 @@ def calculate_bolt_parameters(thrust, safety_factor, beam_length, beam_width, lu
     print(f"The safety factor for bending is: {FoS_bending:.2f}")
     return F_lug, FoS_shear, FoS_bending
 
+
 # Force on head of bolt
 def calculate_bolt_head_parameters(thrust, safety_factor, yield_strength):
     F_head = thrust * safety_factor
@@ -102,14 +118,36 @@ def calculate_bolt_head_parameters(thrust, safety_factor, yield_strength):
     print(f"Side length of the bolt head: {side_length_bolt_head:.2f} mm")  
     return Area_bolt_head, side_length_bolt_head
 
-# Force on thread
-def calculate_bolt_thread_parameters(thrust, safety_factor, yield_strength, diameter_bolt_bending):
-    F_thread = thrust * safety_factor
-    Area_bolt_thread = F_thread / (yield_strength / 10**6)
-    height_bolt_thread = Area_bolt_thread / (np.pi * diameter_bolt_bending)
-    print(f"Area of the bolt thread: {Area_bolt_thread:.2f} mm^2")
-    print(f"Height of the bolt thread: {height_bolt_thread:.2f} mm")
-    return Area_bolt_thread, height_bolt_thread
+#### MALE THREAD CALCULATIONS ####
+
+##TENSILE AREA CALCULATIONS##
+# Tensile Stress Area of male screw
+def calculate_Tensile_Stress_Area(diameter_pin, screw_thread_pitch):
+    At= (np.pi/4)*(diameter_pin-0.938194*screw_thread_pitch)**2
+    print(f"Tensile stress area: {At*10**6:.2f} mm^2")
+    return At
+# Length of Thread Engagement of male screw
+def calculate_Length_Thread_Engagement(Tensile_area, pitch_circle_diameter_thread):
+    L_thread_engagement= 2*Tensile_area/(0.5*np.pi*pitch_circle_diameter_thread)
+    print(f"Minimum length of thread engagement: {L_thread_engagement:.2f} m")
+    return L_thread_engagement
+
+# Safety Factor for Tensile Loading
+def calculate_bolt_thread_safety(thrust, thread_area):
+    F_thread = thrust
+    Effective_load= F_thread/thread_area
+    FoS= yield_strength/Effective_load
+    print(f"Factor of safety for the bolt thread: {FoS}")
+    return FoS
+
+
+##SHEAR AREA CALCULATIONS##
+# Thread Shear Area of male screw
+def calculate_Thread_Shear_Area(L_thread_engagement, pitch_circle_diameter_thread):
+    A_ss= 0.5*np.pi*pitch_circle_diameter_thread*L_thread_engagement
+    return A_ss
+
+### FEMALE THREAD CALCULATIONS ###
 
 # Equation showing the dependence of K_t on the dimensionless ratio diameter/lug_width
 def calculate_kt(diameter, lug_width):
@@ -146,3 +184,7 @@ F_lug, FoS_internal_shear, FoS_internal_moment = calculate_bolt_parameters(thrus
 net_section_safety_factor = calculate_net_section(diameter_pin, 0.03)
 shear_out_safety_factor = calculate_shear_out(diameter_pin, center_lug_hole, lug_thickness)
 bearing_safety_factor = calculate_bearing_failure(diameter_pin, lug_thickness)
+A_t=calculate_Tensile_Stress_Area(diameter_pin, screw_thread_pitch)
+FoS_tensile_bolt=calculate_bolt_thread_safety(thrust, A_t)
+L_thread_engagement=calculate_Length_Thread_Engagement(A_t, pitch_circle_diameter_thread)
+print(f"According to a rule of thumb, the thread engagement should be at least {thread_engagement_ratio} times the diameter of the bolt, depending on the material which is {thread_engagement_ratio*diameter_pin:.2f} m")
