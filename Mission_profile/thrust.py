@@ -65,11 +65,11 @@ def plot_results(time, altitude, velocity, thrust, power):
     axes[0, 1].set_title('Thrust vs Altitude')
     axes[0, 1].grid(True)
     
-    # Power plots
-    axes[1, 0].plot(time, power / 1000)  # Convert to kW
+    # Plot altitude vs time
+    axes[1, 0].plot(time, altitude)
     axes[1, 0].set_xlabel('Time (s)')
-    axes[1, 0].set_ylabel('Power (kW)')
-    axes[1, 0].set_title('Power vs Time')
+    axes[1, 0].set_ylabel('Altitude (m)')
+    axes[1, 0].set_title('Altitude vs Time')
     axes[1, 0].grid(True)
     
     axes[1, 1].plot(altitude, power / 1000)  # Convert to kW
