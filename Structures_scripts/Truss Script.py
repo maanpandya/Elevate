@@ -113,4 +113,4 @@ print("\nMember forces:")
 print(forces)
 print(f"\nOptimized truss weight: {weight:.2f} kg")
 # visualize the optimized truss
-optimizer.visualize_truss(nodes, connections, forces) (edited) 
+optimizer.visualize_truss(nodes, connections, forces) 
