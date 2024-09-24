@@ -29,10 +29,10 @@ thread_height = 0.03 # [m]
 
 # This will determine the thread engagement ratio: length of thread engagement=thread_engagement_ratio*diameter_thread
 
-Material = "Aluminium" # Steel or Aluminium
-if Material == "Steel":
+Material_bolt = "Aluminium" # Steel or Aluminium (it is assumed that the lug is made of steel)
+if Material_bolt == "Steel":
     thread_engagement_ratio = 1
-elif Material == "Aluminium":
+elif Material_bolt == "Aluminium":
     thread_engagement_ratio = 2
 
 # Calculate the pitch of the thread
