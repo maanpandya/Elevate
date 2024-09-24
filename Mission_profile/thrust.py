@@ -2,13 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def calculate_thrust_and_power(mass, velocity, acceleration, rho=1.225):
-    g = 9.81  # gravitational acceleration (m/s^2)
-    drag = 0.5 * 0.808256 * rho * velocity**2  + mass * g
+    g = 9.81  
+    drag = 0.5 * 0.808256 * rho * velocity**2 + mass * g
     thrust = mass * acceleration + drag
     power = thrust * velocity
     return thrust, power
 
-def mission_profile(max_speed, climb_altitude, acceleration):
+def mission_profile(max_speed, climb_altitude, descent_altitude, acceleration, deceleration):
+    # Climb phase
     t_acc = max_speed / acceleration
     d_acc = 0.5 * acceleration * t_acc**2
     
@@ -19,37 +20,60 @@ def mission_profile(max_speed, climb_altitude, acceleration):
     else:
         t_cruise = (climb_altitude - 2 * d_acc) / max_speed
     
-    total_time = 2 * t_acc + t_cruise
+    # Descent phase
+    t_decel = max_speed / deceleration
+    d_decel = 0.5 * deceleration * t_decel**2
     
-    return t_acc, t_cruise, total_time, max_speed
+    if 2 * d_decel > descent_altitude:
+        t_decel = np.sqrt(descent_altitude / deceleration)
+        t_descent = t_decel
+    else:
+        t_descent = (descent_altitude - 2 * d_decel) / max_speed + t_decel
+    
+    total_time = 2 * t_acc + t_cruise + 2 * t_decel
+    
+    return t_acc, t_cruise, t_decel, t_descent, total_time, max_speed
 
-def generate_data(mass, max_speed, climb_altitude, acceleration, rho=1.225):
-    t_acc, t_cruise, total_time, actual_max_speed = mission_profile(max_speed, climb_altitude, acceleration)
+def generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleration, deceleration, rho=1.225):
+    """Generate time, altitude, velocity, thrust, and power data for the full mission."""
+    t_acc, t_cruise, t_decel, t_descent, total_time, actual_max_speed = mission_profile(max_speed, climb_altitude, descent_altitude, acceleration, deceleration)
     
     time = np.linspace(0, total_time, 1000)
     altitude = np.zeros_like(time)
     velocity = np.zeros_like(time)
     thrust = np.zeros_like(time)
     power = np.zeros_like(time)
+    distance = np.zeros_like(time)
     
+    current_distance = 0  # Tracking total distance
+
     for i, t in enumerate(time):
-        if t <= t_acc:
+        if t <= t_acc:  # Acceleration / Climb phase
             velocity[i] = acceleration * t
             altitude[i] = 0.5 * acceleration * t**2
             thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], acceleration, rho)
-        elif t <= t_acc + t_cruise:
+            current_distance = 0.5 * acceleration * t**2  # distance covered during climb
+        elif t <= t_acc + t_cruise:  # Cruise phase
             velocity[i] = actual_max_speed
-            altitude[i] = 0.5 * acceleration * t_acc**2 + actual_max_speed * (t - t_acc)
+            altitude[i] = climb_altitude
             thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], 0, rho)
-        else:
-            t_decel = t - (t_acc + t_cruise)
-            velocity[i] = actual_max_speed - acceleration * t_decel
-            altitude[i] = climb_altitude - 0.5 * acceleration * t_decel**2
-            thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], -acceleration, rho)
-    
-    return time, altitude, velocity, thrust, power
+            current_distance = current_distance + actual_max_speed * (t - t_acc)  # Accumulate cruise distance
+        elif t <= t_acc + t_cruise + t_decel:  # Deceleration / Descent phase
+            t_decel_local = t - (t_acc + t_cruise)
+            velocity[i] = actual_max_speed - deceleration * t_decel_local
+            altitude[i] = climb_altitude - 0.5 * deceleration * t_decel_local**2
+            thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], -deceleration, rho)
+            current_distance = current_distance + actual_max_speed * t_decel_local - 0.5 * deceleration * t_decel_local**2  # Cumulative distance
+        else:  # Post mission hover or zero velocity phase (if applicable)
+            velocity[i] = 0
+            altitude[i] = climb_altitude - descent_altitude
+            thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], 0, rho)
 
-def plot_results(time, altitude, velocity, thrust, power):
+        distance[i] = current_distance  # Update total distance
+
+    return time, altitude, velocity, thrust, power, distance
+
+def plot_results(time, altitude, velocity, thrust, power, distance):
     fig, axes = plt.subplots(3, 2, figsize=(15, 20))
     
     # Thrust plots
@@ -59,46 +83,52 @@ def plot_results(time, altitude, velocity, thrust, power):
     axes[0, 0].set_title('Thrust vs Time')
     axes[0, 0].grid(True)
     
-    axes[0, 1].plot(altitude, thrust)
-    axes[0, 1].set_xlabel('Altitude (m)')
+    axes[0, 1].plot(distance, thrust)
+    axes[0, 1].set_xlabel('Distance (m)')
     axes[0, 1].set_ylabel('Thrust (N)')
-    axes[0, 1].set_title('Thrust vs Altitude')
+    axes[0, 1].set_title('Thrust vs Distance')
     axes[0, 1].grid(True)
     
-    # Plot altitude vs time
+    # Altitude and velocity plots
     axes[1, 0].plot(time, altitude)
     axes[1, 0].set_xlabel('Time (s)')
     axes[1, 0].set_ylabel('Altitude (m)')
     axes[1, 0].set_title('Altitude vs Time')
     axes[1, 0].grid(True)
     
-    axes[1, 1].plot(altitude, power / 1000)  # Convert to kW
-    axes[1, 1].set_xlabel('Altitude (m)')
-    axes[1, 1].set_ylabel('Power (kW)')
-    axes[1, 1].set_title('Power vs Altitude')
+    axes[1, 1].plot(time, velocity)
+    axes[1, 1].set_xlabel('Time (s)')
+    axes[1, 1].set_ylabel('Velocity (m/s)')
+    axes[1, 1].set_title('Velocity vs Time')
     axes[1, 1].grid(True)
     
-    # Velocity plots
-    axes[2, 0].plot(time, velocity)
+    # Power plot
+    axes[2, 0].plot(time, power / 1000)  # Convert to kW
     axes[2, 0].set_xlabel('Time (s)')
-    axes[2, 0].set_ylabel('Velocity (m/s)')
-    axes[2, 0].set_title('Velocity vs Time')
+    axes[2, 0].set_ylabel('Power (kW)')
+    axes[2, 0].set_title('Power vs Time')
     axes[2, 0].grid(True)
     
-    axes[2, 1].plot(altitude, velocity)
-    axes[2, 1].set_xlabel('Altitude (m)')
-    axes[2, 1].set_ylabel('Velocity (m/s)')
-    axes[2, 1].set_title('Velocity vs Altitude')
+    axes[2, 1].plot(distance, power / 1000)  # Converting to kW
+    axes[2, 1].set_xlabel('Distance (m)')
+    axes[2, 1].set_ylabel('Power (kW)')
+    axes[2, 1].set_title('Power vs Distance')
     axes[2, 1].grid(True)
     
     plt.tight_layout()
     plt.show()
 
-mass = 5000  # kg
+
+mass = 500  # kg
 max_speed = 20  # m/s
 climb_altitude = 500  # m
+descent_altitude = 500  # m
 acceleration = 9.81  # m/s^2
+deceleration = 9.81  # m/s^2
 rho = 1.225  # kg/m^3
 
-time, altitude, velocity, thrust, power = generate_data(mass, max_speed, climb_altitude, acceleration, rho)
-plot_results(time, altitude, velocity, thrust, power)
+time, altitude, velocity, thrust, power, distance = generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleration, deceleration, rho)
+plot_results(time, altitude, velocity, thrust, power, distance) # toggle comment to plot the results
+
+
+
