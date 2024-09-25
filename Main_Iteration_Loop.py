@@ -1,4 +1,9 @@
 import numpy as np
+from matplotlib import pyplot as plt
+
+#----------------------------------------------------------------------------#
+#             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
+#----------------------------------------------------------------------------#
 
 #Propeller coaxial effects have not been taken into account
 #Rotorcraft theory needs to be further improved and understood for power calculations
@@ -9,17 +14,21 @@ import numpy as np
 #Implement diversion to other landing zones, which is an additional distance added to the cruise range
 
 
-#Initial parameters and constants
+#----------------------------------------------------------------------------#
+#                  INITIAL PARAMETERS AND CONSTANTS                          #
+#----------------------------------------------------------------------------#
 
-payload_mass = 93 #kg
+payload_mass = 93.0 #kg
 g = 9.80665 #m/s^2
 air_density = 1.225 #kg/m^3 (sea level)
 air_temperature = 288.15 #K (sea level)
 air_specific_heat_ratio = 1.4 #(standard conditions)
-air_gas_constant = 287 #(standard conditions)
+air_gas_constant = 287.0 #(standard conditions)
 air_speed_of_sound = np.sqrt(air_specific_heat_ratio*air_gas_constant*air_temperature)
 
-#----Class I Weight Estimation----#
+#----------------------------------------------------------------------------#
+#                      CLASS I WEIGHT ESTIMATION                             #
+#----------------------------------------------------------------------------#
 
 payload_masses = np.array([100, 120, 79.8, 99.8, 113.4, 158.8, 200, 120, 150, 200, 100, 130, 95.3, 70, 180, 100]) #kg
 operational_empty_masses = np.array([260, 240, 327.1, 113.4, 195.9, 290.3, 360.2, 230, 250, 300, 300, 270, 114.8, 200, 270, 230]) #kg
@@ -29,9 +38,19 @@ slope, intercept = np.polyfit(payload_masses, operational_empty_masses, 1)
 class_one_operational_empty_mass = payload_mass*slope + intercept #kg
 class_one_maximum_take_off_mass = class_one_operational_empty_mass + payload_mass #kg
 
-#-----Class II Weight Estimation----#
+#----------------------------------------------------------------------------#
+#                    CLASS II WEIGHT ESTIMATION                              #
+#----------------------------------------------------------------------------#
 
-#General Propulsion & Performance
+#-------------------Mission Velocity & Thrust Profiles-----------------------#
+
+#Obtained from Rimaz's code
+
+
+#----------------------Propeller Optimization Loop---------------------------#
+
+#Obtained from Tamas's code
+
 
 thrust_to_weight = 2.0 #Design choice, for maneuvering conditions (could be 1.5)
 number_of_propellers = 6.0 #Design choice (variable)
@@ -87,7 +106,8 @@ cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airfr
 cruise_power_values = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * total_propeller_area * blade_tip_velocity**3 #W
 
 
-#Productivty Mission & Energy
+#-------------------Productivity Mission Modelling-----------------------#
+
 
 # Mission starts with unloaded flight, then loaded and repeating this pattern until 90 minutes runs out, trying to get as close as possible.
 # The mission is defined as the sum of all runs and one run can be any defined number of flights
@@ -198,13 +218,15 @@ run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_
 run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
 total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
 
+
+#-------------------Component Weight Estimation-----------------------#
+
+#Battery sizing
 minimum_battery_state_of_charge = 0.2 #20% of the battery charge is preserved to improve the longevity of the battery and can be used as an emergence energy reserve as well
 battery_efficiency = 0.92
 battery_energy_density = 270.0 * 3600.0 #J/kg (could range between 170-350 Wh/kg, 3600 is conversion factor from Wh to J)
 battery_mass = 1.05 * (total_run_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for aviones and other sytems consumption)
 total_battery_packs_mass = battery_mass * battery_change_times #kg (Total mass of all battery packs needed)
-
-#Remaining Class II weight formulas
 
 #Original Excel Weight Formulas
 fuselage_length = 2.0 #m (Assumed)
@@ -217,45 +239,50 @@ total_fuselage_mass_1 = 14.86 * (class_one_maximum_take_off_mass**(0.144)) * ((f
 propeller_blades_mass_1 = (0.144 * ((propeller_diameter * vertical_climb_power_values[0] * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
 propeller_motor_mass_1 = ((0.165 * vertical_climb_power_values[0])  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
 
-#Rohits class II weight estimation formulas 1-6
+#Rohit's Class II Weight Estimation (1-6)
 
-propeller_mass_calibration_factor = 1 #Used to match the weight of some desired industry propeller series, needs to be determined
-fuselage_skin_material_density = 1 #Determined from structures, aluminium or composite
-bulkhead_material_density = 1 #Determined from structures, bulkhead separates passenger from battery and other units
-landing_impact_factor = 1.5 #Landing load factor? Definition unclear
-landing_gear_retaining_bolt_ultimate_strength = 1 #Determined from structures
-landing_gear_pad_ultimate_strength = 1 #Determined from structures
-landing_gear_pad_material_density = 1 #Determined from structures
+#propeller_mass_calibration_factor = 1 #Used to match the weight of some desired industry propeller series, needs to be determined
+#fuselage_skin_material_density = 1500 #kg/m^3 (Given by Viktor, average between plastics and composites)
+#bulkhead_material_density = 1200 #Determined from structures, bulkhead separates passenger from battery and other units (Given by Viktor, plastic)
+#landing_impact_factor = 1.5 #Landing load factor? Definition unclear
+#landing_gear_retaining_bolt_ultimate_strength = 1 #Determined from structures
+#landing_gear_pad_ultimate_strength = 1 #Determined from structures
+#landing_gear_pad_material_density = 1 #Determined from structures
 
-fuselage_wetted_area = 4.0 * np.pi * (0.3333 * ((fuselage_length * fuselage_width)**(8.0/5.0) + (fuselage_length * (fuselage_height/4.0))**(8.0/5.0) + (fuselage_width + (fuselage_height / 4.0))**(8.0/5.0)))**(5.0/8.0) #m^2
-bulkhead_wetted_area = (3.0 * np.pi /4.0) * (fuselage_height * fuselage_width) #m^2
-landing_force = class_one_maximum_take_off_mass * landing_impact_factor * np.sin((2.0 * np.pi /360.0) * 40.0) #N (40º landing angle with respect to surfaced)
-landing_gear_retaining_bolt_diameter = 2.0 * np.sqrt(landing_force / (np.pi * landing_gear_retaining_bolt_ultimate_strength)) #m
-landing_gear_pad_thickness = landing_force / (landing_gear_retaining_bolt_diameter * landing_gear_pad_ultimate_strength) #m
-landing_gear_pad_volume = (np.pi * (20.0 * landing_gear_pad_thickness)**(2)) * (landing_gear_pad_thickness/3.0) #m^3
+#fuselage_wetted_area = 4.0 * np.pi * (0.3333 * ((fuselage_length * fuselage_width)**(8.0/5.0) + (fuselage_length * (fuselage_height/4.0))**(8.0/5.0) + (fuselage_width + (fuselage_height / 4.0))**(8.0/5.0)))**(5.0/8.0) #m^2
+#bulkhead_wetted_area = (3.0 * np.pi /4.0) * (fuselage_height * fuselage_width) #m^2
+#landing_force = class_one_maximum_take_off_mass * landing_impact_factor * np.sin((2.0 * np.pi /360.0) * 40.0) #N (40º landing angle with respect to surfaced)
+#landing_gear_retaining_bolt_diameter = 2.0 * np.sqrt(landing_force / (np.pi * landing_gear_retaining_bolt_ultimate_strength)) #m
+#landing_gear_pad_thickness = landing_force / (landing_gear_retaining_bolt_diameter * landing_gear_pad_ultimate_strength) #m
+#landing_gear_pad_volume = (np.pi * (20.0 * landing_gear_pad_thickness)**(2)) * (landing_gear_pad_thickness/3.0) #m^3
 
-propeller_blades_mass_2 = 0.144 * propeller_mass_calibration_factor * (((propeller_diameter * 3.281 * max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) * 1.360 * np.sqrt(number_of_blades))**(0.782)) / (2.74)) * number_of_propellers #kg
-fuselage_skin_mass = fuselage_wetted_area * fuselage_skin_material_density #kg
-bulkhead_mass = bulkhead_material_density * bulkhead_wetted_area #kg
-landing_gear_mass_3 = 4 * landing_gear_pad_volume * landing_gear_pad_material_density #kg
-total_fuselage_mass_2 = fuselage_skin_mass + bulkhead_mass + landing_gear_pad_mass #kg (Rohits class II formula sheet source, soem definitions aren't the clearest and it depends a lot on structural considerations)
+#propeller_blades_mass_2 = 0.144 * propeller_mass_calibration_factor * (((propeller_diameter * 3.281 * max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) * 1.360 * np.sqrt(number_of_blades))**(0.782)) / (2.74)) * number_of_propellers #kg
+#fuselage_skin_mass = fuselage_wetted_area * fuselage_skin_material_density #kg
+#bulkhead_mass = bulkhead_material_density * bulkhead_wetted_area #kg
+#landing_gear_mass_2 = 4 * landing_gear_pad_volume * landing_gear_pad_material_density #kg
+#total_fuselage_mass_2 = fuselage_skin_mass + bulkhead_mass #kg (Rohits class II formula sheet source, soem definitions aren't the clearest and it depends a lot on structural considerations)
 
-#Rohits class II weight estimation formulas 7
+#Rohit's Class II Weight Estimation (7)
 
 fuselage_wetted_area_3 = (2.0 * fuselage_length * fuselage_height) + (fuselage_height * fuselage_width * 2.0) + (fuselage_width * fuselage_length * 2.0) #m^2 (Assuming a prism and that all the area is wetted)
 number_of_landing_gears = 4.0
 
 pound_to_kilo_conversion_factor = 0.45359237 #Unit conversion
+kilo_to_pound_conversion_factor = 1.0 / pound_to_kilo_conversion_factor #Unit conversion
+meters_to_feet_conversion_factor = 3.28084 #Unit conversion
+square_meters_to_square_feet_conversion_factor = meters_to_feet_conversion_factor * meters_to_feet_conversion_factor #Unit conversion
+
 propeller_blades_mass_3 = (2.20462/1000.0) * ((7200.0/500.0) * (thrust_values[0] * 4.4482 - 300.0) + 800.0) * number_of_propellers * pound_to_kilo_conversion_factor #kg (Also includes hub mass)
 #additional_hub_mass = 0.0037 * (number_of_blades)**(0.28) * (propeller_diameter/2.0)**(1.5) * (blade_tip_velocity)**(0.43) * (0.01742 * (number_of_blades)**(0.66) * propeller_chord * (propeller_diameter / 2.0)**(1.3) * (blade_tip_velocity)**(0.67) + g * (np.pi * (propeller_diameter/2.0)**(0.5))**(0.5))**(0.55) kg (Only used in the second iteration and correct units to imperial)
-propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * (max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) * propeller_angular_velocity * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) / 1000.0) * propeller_angular_velocity * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
 motor_controller_mass = 2.20462 * ((49.9/398.0) * ((max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0])/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-total_fuselage_mass_3 = 6.9 * (class_one_maximum_take_off_mass/1000.0)**(0.49) * fuselage_length**(0.61) * fuselage_wetted_area_3**(0.25) * pound_to_kilo_conversion_factor #kg
+total_fuselage_mass_3 = 6.9 * ((class_one_maximum_take_off_mass * kilo_to_pound_conversion_factor)/1000.0)**(0.49) * (fuselage_length * meters_to_feet_conversion_factor)**(0.61) * (fuselage_wetted_area_3 * square_meters_to_square_feet_conversion_factor)**(0.25) * pound_to_kilo_conversion_factor #kg
 landing_gear_mass_3 = 40 * (class_one_maximum_take_off_mass/1000.0)**(0.47) * number_of_landing_gears**(0.54) * pound_to_kilo_conversion_factor #kg
-flight_control_system_mass = 11.5 * (class_one_maximum_take_off_mass/1000.0)**(0.4) * pound_to_kilo_conversion_factor #kg
-avionics_mass = 0.0268**(class_one_maximum_take_off_mass) * pound_to_kilo_conversion_factor #kg
+flight_control_system_mass = 11.5 * ((class_one_maximum_take_off_mass * kilo_to_pound_conversion_factor)/1000.0)**(0.4) * pound_to_kilo_conversion_factor #kg
+avionics_mass = 0.0268**(class_one_maximum_take_off_mass * kilo_to_pound_conversion_factor) * pound_to_kilo_conversion_factor #kg
+furnishings_mass = 13 * ((class_one_maximum_take_off_mass * kilo_to_pound_conversion_factor) / 1000)**(1.3) * pound_to_kilo_conversion_factor #kg
 
-#Rohits class II weight estimation formulas 9
+#Rohit's Class II Weight Estimation (9)
 
 maximum_battery_power = max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) / 1000.0 #kW (Assuming it is the same as the propeller, should be modified)
 maximum_motor_power = max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) / 1000.0 #kW
@@ -263,5 +290,25 @@ battery_management_system_power_density = 20.0 #kW/kg (Needs to be found)
 electric_motor_power_density = 5.0 #kW/kg (Needs to be found)
 
 battery_management_system_mass = maximum_battery_power / battery_management_system_power_density #kg
-electric_motor_mass = maximum_motor_power / electric_motor_power_density #kg
+electric_motor_mass_4 = maximum_motor_power / electric_motor_power_density #kg
 battery_thermal_management_system_mass = 0.521 * ((1.0 - battery_efficiency)/(battery_efficiency)) * maximum_battery_power + 1.863 #kg
+
+#Component sizing result
+
+class_II_weight_estimation_results = np.array([battery_management_system_mass, battery_thermal_management_system_mass, total_fuselage_mass_3, propeller_motor_mass_3, propeller_blades_mass_3, motor_controller_mass, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass, payload_mass]) #kg
+class_II_maximum_take_off_mass = np.sum(class_II_weight_estimation_results) #kg
+
+#Plot the weight distribution
+weight_name_labels = ["Battery Management", "Thermal Management", "Fuselage", "Motors", "Propeller Blades & Hubs", "Motor Controller", "Landing Gear", "Flight Control", "Avionics", "Furnishings", "Payload"]
+class_II_relative_weight_estimation_results = class_II_weight_estimation_results / class_II_maximum_take_off_mass #kg
+
+print(class_II_maximum_take_off_mass)
+print(class_II_weight_estimation_results)
+
+plt.pie(class_II_relative_weight_estimation_results, labels=weight_name_labels, shadow=True)
+plt.axis('equal')  
+plt.title('Class II Weight Estimation Distribution')
+plt.show()
+
+#-------------------Adversity Mission Modelling-----------------------#
+#-------------------Maneuvering Mission Modelling---------------------#
