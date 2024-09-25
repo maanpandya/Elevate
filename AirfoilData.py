@@ -66,6 +66,6 @@ def get_aifoildata(foil, re_angs, query):
     return np.array(results)
 
 # Test code, should yield: [[1.17880000e+00 4.30800002e-02 2.73630455e+01 6.40000000e+00 4.99226092e+01 9.03100000e-01]]
-# question = ('Cl', 'Cd', 'ClCd', 'AlphaClCd', 'ClCdmax', 'ClCdmaxCl')
-# answer = get_aifoildata('NACA 2412', [[1e5, 12]], question)
-# print(answer)
+#question = ('Cl', 'Cd')
+#answer = get_aifoildata('NACA 2412', [[1e5, 12]], question)
+#print(answer)
