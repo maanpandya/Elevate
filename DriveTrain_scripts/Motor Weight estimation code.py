@@ -21,30 +21,29 @@ print("the motor mass is:" ,motor_mass)
 
 #graph
 
-# Read the CSV with specific delimiter
-data = pd.read_csv(r'C:\Users\Gebruiker\Desktop\Elevate\Elevate\DriveTrain_scripts\motor comparison(Sheet1).csv', delimiter=';', encoding='ISO-8859-1')
+# Read the CSV file and skip some rows and columns
+data = pd.read_csv(r'C:\Users\Gebruiker\Desktop\Elevate\Elevate\DriveTrain_scripts\motor comparison(Sheet2).csv', encoding='latin-1', skiprows=4)
+data = data.iloc[:, 1:] 
+
+# Remove row 16 and 35 because they are outliers
+data = data.drop([16])
+data = data.drop([35])
 
 # Extract columns
-Names = data.iloc[6:44, 9]  # Column K 
-Weight = data.iloc[6:44, 18] # Column T 
-Power = data.iloc[6:44, 20]  # Column V (
-
-# Convert Weight and Power to numeric values, coercing errors to NaN
-Weight = pd.to_numeric(Weight.str.replace(',', '.'), errors='coerce')
-Power = pd.to_numeric(Power.str.replace(',', '.'), errors='coerce')
+Names = data['Name'] 
+Weight = data['Weight(kg)(AC)'] 
+Power = data['P(kW)2']
 
 # Drop any rows with NaN values
 data_cleaned = pd.DataFrame({'Names': Names, 'Weight': Weight, 'Power': Power}).dropna()
 
-#remove row 20, because it is an outlier
-data_cleaned = data_cleaned.drop([20])
-
 # Display the extracted data
 print(data_cleaned)
 
-# Extract Weight and Power as numpy arrays for regression
+# Extract Weight, Power, and updated Names from the cleaned data
 X = data_cleaned['Power'].values
 Y = data_cleaned['Weight'].values
+updated_names = data_cleaned['Names'].values  # Updated names after removing rows
 
 # Perform linear regression
 slope, intercept = np.polyfit(X, Y, 1)
@@ -55,12 +54,24 @@ regression_line = slope * X + intercept
 # Plot the data and the regression line
 plt.figure(figsize=(10, 6))
 plt.scatter(X, Y, color='b', label='Data points')
+
+# Annotate each data point with the corresponding name
+for i in range(len(X)):
+    plt.text(X[i], Y[i], updated_names[i], fontsize=9, ha='right', color='green')  # Use updated_names
+
+# Plot the regression line
 plt.plot(X, regression_line, color='r', label=f'Linear fit: y = {slope:.2f}x + {intercept:.2f}')
+
+# Add labels and title
 plt.xlabel('Power (kW)')
 plt.ylabel('Weight (kg)')
 plt.title('Power vs Weight with Linear Regression')
+
+# Show legend and grid
 plt.legend()
 plt.grid(True)
+
+# Show the plot
 plt.show()
 
 # Print the equation of the line
