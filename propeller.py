@@ -92,7 +92,7 @@ def design(D, T_hv):
 
 def powers(D, T_hv, lst):
     r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv)
-    print(P_hv)
+    #print(P_hv)
     nr_sect=np.size(r)
     R=r[-1]
     xi=r/R
@@ -116,6 +116,8 @@ def powers(D, T_hv, lst):
         Re = Re_hv
 
         while np.abs((T_conv-T)/T_conv)>0.005:
+            i_lst = []
+            a_lst = []
             for i in range(200):
                 f=B/2*(1-xi)/np.sin(np.arctan2(xi*np.tan(phi),1))
                 F=2/np.pi*np.arccos(np.exp(-f))
@@ -140,6 +142,9 @@ def powers(D, T_hv, lst):
                 a[-1]=a[-2]
                 a_prime[-1]=a_prime[-2]
 
+                i_lst.append(i)
+                a_lst.append(a[0])
+
                 W=V_n*(1+a)/np.sin(phi)
                 Re=W*c/kin_viscosity
                 Re[-1] = 100000
@@ -147,18 +152,25 @@ def powers(D, T_hv, lst):
                 delta_phi=np.arctan2(V_n*(1+a), omega*r*(1-a_prime))-phi
                 phi+=delta_phi/200
 
+
+
             C_T_prime = np.pi ** 3 / 4 * sigma * C_y * xi ** 3 * F ** 2 / ((F + sigma * K_prime) * np.cos(phi)) ** 2
             C_P_prime = C_T_prime * np.pi * xi * C_x / C_y
             C_T_prime[-1] = C_T_prime[-2]
             C_P_prime[-1] = C_P_prime[-2]
 
+            #plt.plot(xi, C_P_prime)
+            #plt.title(f'baseline, omega={omega}')
+            #plt.show()
+
             C_T = np.trapz(C_T_prime, x=xi)
             C_P = np.trapz(C_P_prime, x=xi)
-            print(4 / np.pi ** 3 * C_P * rho * omega ** 3 * R ** 5)
-            print()
+            #print(4 / np.pi ** 3 * C_P * rho * omega ** 3 * R ** 5)
+            #print()
 
             phi_eq=phi
             Re_eq=Re
+            a_prime_eq=a_prime
 
             n_psi=11
             T=0
@@ -198,16 +210,16 @@ def powers(D, T_hv, lst):
                     i_lst.append(i)
                     a_lst.append(a[0])
 
-                    W = V_n * (1 + a) / np.sin(phi)
+                    W = np.sqrt((V_n*(1+a))**2+(omega*r*(1-a_prime)+V_t)**2)
                     Re = W * c / kin_viscosity
                     Re[-1] = 100000
 
                     delta_phi = np.arctan2(V_n * (1 + a), omega * r * (1 - a_prime) + V_t) - phi
                     phi += delta_phi / 200
 
-                plt.plot(i_lst, a_lst)
-                plt.show()
-                C_T_prime = np.pi**3/4*sigma*C_y*xi**3*F**2/((F+sigma*K_prime)*np.cos(phi))**2
+
+
+                C_T_prime = np.pi**3/4*sigma*C_y*xi**3*W**2/(omega*r)**2
                 C_P_prime = C_T_prime*np.pi*xi*C_x/C_y
                 C_T_prime[-1] = C_T_prime[-2]
                 C_P_prime[-1] = C_P_prime[-2]
@@ -217,13 +229,20 @@ def powers(D, T_hv, lst):
                 T+= 4 / np.pi ** 2 * C_T * rho * omega ** 2 * R ** 4/n_psi
                 P+=4/np.pi**3*C_P*rho*omega**3*R**5/n_psi
                 print(4/np.pi**3*C_P*rho*omega**3*R**5)
+                #print(W)
 
-            print()
+                #plt.plot(xi, C_P_prime)
+
+            #plt.title(f'omega={omega}, psi={psi}')
+            #plt.show()
+            #print(P)
+            #print(T)
+            #print()
             omega*=np.sqrt(T_conv/T)
         powers.append(P)
 
     return powers
 
-print(powers(D=0.3048 * 5.75, T_hv=923.49528, lst=[[937, 20, 10]]))
+print(powers(D=0.3048 * 5.75, T_hv=923, lst=[[923, 20, 10]]))
 
 
