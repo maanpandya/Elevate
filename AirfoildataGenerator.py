@@ -36,6 +36,7 @@ def make_airfoildata(airfoil, foilpath, angles, re_nrs, verify):
 
     #Construct interpolation functions:
     points = np.reshape(points, (-1, 2))
+    #print(points)
     area_func = interp.LinearNDInterpolator(points, np.zeros(len(points)))
     cl_func = interp.RBFInterpolator(points, cl_data.ravel(), smoothing=0, kernel='cubic')
     cd_func = interp.RBFInterpolator(points, cd_data.ravel(), smoothing=0, kernel='cubic')
@@ -112,3 +113,5 @@ def make_airfoildata(airfoil, foilpath, angles, re_nrs, verify):
         pickle.dump(clcdmax_func, file)
     with open('AirfoilData/' + foilpath + '/clcdmaxcl_func.pkl', 'wb') as file:
         pickle.dump(clcdmaxcl_func, file)
+
+#make_airfoildata('NACA 2412', 'NACA_2412', np.arange(10, 0, -0.2), np.arange(3, 8, 1), True)

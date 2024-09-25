@@ -2,23 +2,25 @@ import numpy as np
 from AirfoilData import get_aifoildata
 import time
 import matplotlib.pyplot as plt
+import pickle
 
 start_time = time.time()
 
 # Global Inputs
+rho = 1.225
+dyn_viscosity = 1.789e-5
+kin_viscosity = dyn_viscosity/rho
+a = 340
+B=2
+foil = 'NACA 4415'
+foilpath = foil.replace(" ", "_")
 
-
-def powers(D, T, V, theta):
-    foil = 'NACA 4415'
-    D_hub = 0.3048
-    B = 2
-    a = 340
-    mach_tip = 0.6     # No more than 0.6 to reduce noise.
-    rho = 1.225
-    dyn_viscosity = 1.789e-5
-    kin_viscosity = dyn_viscosity/rho
-
+def design(D, T_hv):
+    #print(T_hv)
     nr_sect = 100
+    V=0.001
+    D_hub = 0.3048
+    mach_tip = 0.6
     zeta_acc = 0.001
     V_displ=20
     zeta = V_displ/V
@@ -28,10 +30,9 @@ def powers(D, T, V, theta):
     R = D/2
     omega = a*mach_tip/R
     v_ratio = V/(omega*R)
-    T_c = 2 * T / (rho * V**2 * np.pi * R**2)
+    T_c = 2 * T_hv / (rho * V**2 * np.pi * R**2)
 
     r = np.linspace(D_hub/2, D/2, nr_sect)
-    dr=(R-D_hub/2)/(nr_sect-1)
     xi = r/R
 
     while abs(zeta_prev/zeta - 1) >= zeta_acc:
@@ -44,25 +45,6 @@ def powers(D, T, V, theta):
         #print(phi)
         x = omega * r / V
         G = F * x * np.cos(phi) * np.sin(phi)
-        gamma=2*np.pi*V**2*zeta*G/(B*omega)
-        gamma_slope=[gamma[0]/dr]
-        for i in range(nr_sect-2):
-            gamma_slope.append((gamma[i+2]-gamma[i])/(2*dr))
-        gamma_slope.append(-gamma[-2]/dr)
-        gamma_slope=np.array(gamma_slope)
-
-        V_ind_lst=[]
-        for i in range(nr_sect):
-            V_ind = -gamma_slope[i] / (2 * r[i]) * dr/(4*np.pi)
-            for j in range(nr_sect - 1):
-                index = (i + 1 + j) % nr_sect
-                V_ind += gamma_slope[index] / (
-                        r[i] - r[index]) * dr/(4*np.pi)
-                V_ind += -gamma_slope[index] / (
-                        r[i] + r[index]) * dr/(4*np.pi)
-            V_ind_lst.append(V_ind)
-        V_ind=np.array(V_ind_lst)
-
 
         re_angs = np.insert(np.expand_dims(Re, axis=1), 1, np.zeros((1, nr_sect)), axis=1)
         re_angs[-1, 0] = 100000
@@ -72,49 +54,195 @@ def powers(D, T, V, theta):
 
         Wc = 4 * np.pi * v_ratio * G * V * R * zeta / (cl * B)
         #print(Wc)
-        Re_prv = Re
         Re = Wc / kin_viscosity
         #print(Re)
         param1 = 1 - cdcl * np.tan(phi)
         param2 = 1 + cdcl / np.tan(phi)
         ax_interf = zeta / 2 * (np.cos(phi))**2 * param1
-        ax_interf_slope=[(ax_interf[1]-ax_interf[0])/dr]
-        for i in range(nr_sect-2):
-            ax_interf_slope.append((ax_interf[i+1]-ax_interf[i])/(1*dr))
-        ax_interf_slope.append((ax_interf[-1]-ax_interf[-2])/dr)
         rot_interf = zeta / (2 * x) * np.cos(phi) * np.sin(phi) * param2
         #print(ax_interf)
         W = V * (1 + ax_interf) / np.sin(phi)
         c = Wc / W
-        alpha_ind=V_ind/W
-        beta = phi + alpha + alpha_ind
+        beta = phi + alpha
 
         i1 = 4 * xi * G * param1
         i2 = v_ratio * i1 / (2 * xi) * param2 * np.sin(phi) * np.cos(phi)
         j1 = 4 * xi * G * param2
         j2 = j1 / 2 * param1 * (np.cos(phi))**2
 
-        I1 = np.trapz(i1, x=r)
-        I2 = np.trapz(i2, x=r)
-        J1 = np.trapz(j1, x=r)
-        J2 = np.trapz(j2, x=r)
+        I1 = np.trapz(i1, x=xi)
+        I2 = np.trapz(i2, x=xi)
+        J1 = np.trapz(j1, x=xi)
+        J2 = np.trapz(j2, x=xi)
 
         zeta_prev = zeta
         zeta = I1/(2*I2)-np.sqrt((I1/(2*I2))**2-T_c/I2)
-        print(zeta)
+        #print(zeta)
 
-    #print(f'Convergence reached! ({(time.time() - start_time)} seconds)\nZetaRatio; {zeta_prev/zeta} ReRatio; {Re_prv/(Re+0.01)}')
 
     P_c = J1*zeta + J2*zeta**2
     P=P_c*rho*V**3*np.pi*R**2/2
-    prop_efficiency = T_c / P_c
-    print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
-    solidarity = B*c/(2*np.pi*R)
-    #plt.plot(r, ax_interf)
+    #print(P)
+    #prop_efficiency = T_c / P_c
+    #print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
+    #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
-    return P
+    return r, c, beta, phi, Re, omega, P
 
-print(powers(D=0.3048 * 5.75, T=923.49528, V=0.001, theta=0))
+def powers(D, T_hv, lst):
+    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv)
+    #print(P_hv)
+    nr_sect=np.size(r)
+    R=r[-1]
+    xi=r/R
+    sigma=B*c/(2*np.pi*r)
+
+    with open('AirfoilData/' + foilpath + '/cl_func.pkl', 'rb') as file:
+        cl_func = pickle.load(file)
+    with open('AirfoilData/' + foilpath + '/cd_func.pkl', 'rb') as file:
+        cd_func = pickle.load(file)
+
+    powers=[P_hv]
+    for point in lst:
+        T_conv, V, theta = point
+        T=0
+        theta=np.radians(theta)
+        V_n=V*np.sin(theta)
+        V_disc=V*np.cos(theta)
+
+        omega=omega_hv
+        phi=phi_hv+0.05
+        Re = Re_hv
+
+        while np.abs((T_conv-T)/T_conv)>0.005:
+            i_lst = []
+            a_lst = []
+            for i in range(200):
+                f=B/2*(1-xi)/np.sin(np.arctan2(xi*np.tan(phi),1))
+                F=2/np.pi*np.arccos(np.exp(-f))
+                alpha=beta-phi
+
+                points=[]
+                for j in range(nr_sect):
+                    points.append([np.log10(Re[j]), np.degrees(alpha[j])])
+
+                C_l=cl_func(points)
+                C_d = cd_func(points)
+                epsilon=C_d/C_l
+
+                C_y = C_l*(np.cos(phi) - epsilon*np.sin(phi))
+                C_x = C_l*(np.sin(phi)+epsilon*np.cos(phi))
+
+                K = C_y/(4*np.sin(phi)**2)
+                K_prime = C_x/(4*np.sin(phi)*np.cos(phi))
+
+                a = sigma*K/(F-sigma*K)
+                a_prime = sigma*K_prime/(F+sigma*K_prime)
+                a[-1]=a[-2]
+                a_prime[-1]=a_prime[-2]
+
+                i_lst.append(i)
+                a_lst.append(a[0])
+
+                W=V_n*(1+a)/np.sin(phi)
+                Re=W*c/kin_viscosity
+                Re[-1] = 100000
+
+                delta_phi=np.arctan2(V_n*(1+a), omega*r*(1-a_prime))-phi
+                phi+=delta_phi/200
+
+
+
+            C_T_prime = np.pi ** 3 / 4 * sigma * C_y * xi ** 3 * F ** 2 / ((F + sigma * K_prime) * np.cos(phi)) ** 2
+            C_P_prime = C_T_prime * np.pi * xi * C_x / C_y
+            C_T_prime[-1] = C_T_prime[-2]
+            C_P_prime[-1] = C_P_prime[-2]
+
+            #plt.plot(xi, C_P_prime)
+            #plt.title(f'baseline, omega={omega}')
+            #plt.show()
+
+            C_T = np.trapz(C_T_prime, x=xi)
+            C_P = np.trapz(C_P_prime, x=xi)
+            #print(4 / np.pi ** 3 * C_P * rho * omega ** 3 * R ** 5)
+            #print()
+
+            phi_eq=phi
+            Re_eq=Re
+            a_prime_eq=a_prime
+
+            n_psi=11
+            T=0
+            P=0
+            for psi in np.linspace(0, 180, n_psi):
+                psi=np.radians(psi)
+                V_t=V_disc*np.cos(psi)
+                phi=phi_eq
+                Re=Re_eq
+
+                i_lst=[]
+                a_lst=[]
+                for i in range(200):
+                    f = B / 2 * (1 - xi) / np.sin(np.arctan2(xi * np.tan(phi), 1))
+                    F = 2 / np.pi * np.arccos(np.exp(-f))
+                    alpha = beta - phi
+
+                    points = []
+                    for j in range(nr_sect):
+                        points.append([np.log10(Re[j]), np.degrees(alpha[j])])
+
+                    C_l = cl_func(points)
+                    C_d = cd_func(points)
+                    epsilon = C_d / C_l
+
+                    C_y = C_l * (np.cos(phi) - epsilon * np.sin(phi))
+                    C_x = C_l * (np.sin(phi) + epsilon * np.cos(phi))
+
+                    K = C_y / (4 * np.sin(phi) ** 2)
+                    K_prime = C_x / (4 * np.sin(phi) * np.cos(phi))
+
+                    a = sigma * K / (F - sigma * K)
+                    a_prime = sigma * K_prime / (F + sigma * K_prime)
+                    a[-1] = a[-2]
+                    a_prime[-1] = a_prime[-2]
+
+                    i_lst.append(i)
+                    a_lst.append(a[0])
+
+                    W = np.sqrt((V_n*(1+a))**2+(omega*r*(1-a_prime)+V_t)**2)
+                    Re = W * c / kin_viscosity
+                    Re[-1] = 100000
+
+                    delta_phi = np.arctan2(V_n * (1 + a), omega * r * (1 - a_prime) + V_t) - phi
+                    phi += delta_phi / 200
+
+
+
+                C_T_prime = np.pi**3/4*sigma*C_y*xi**3*W**2/(omega*r)**2
+                C_P_prime = C_T_prime*np.pi*xi*C_x/C_y
+                C_T_prime[-1] = C_T_prime[-2]
+                C_P_prime[-1] = C_P_prime[-2]
+
+                C_T=np.trapz(C_T_prime, x=xi)
+                C_P=np.trapz(C_P_prime, x=xi)
+                T+= 4 / np.pi ** 2 * C_T * rho * omega ** 2 * R ** 4/n_psi
+                P+=4/np.pi**3*C_P*rho*omega**3*R**5/n_psi
+                print(4/np.pi**3*C_P*rho*omega**3*R**5)
+                #print(W)
+
+                #plt.plot(xi, C_P_prime)
+
+            #plt.title(f'omega={omega}, psi={psi}')
+            #plt.show()
+            #print(P)
+            #print(T)
+            #print()
+            omega*=np.sqrt(T_conv/T)
+        powers.append(P)
+
+    return powers
+
+print(powers(D=0.3048 * 5.75, T_hv=923, lst=[[923, 20, 10]]))
 
 
