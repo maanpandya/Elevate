@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def calculate_thrust_and_power(mass, velocity, acceleration, rho=1.225):
-    g = 9.81  
-    drag = 0.5 * 0.808256 * rho * velocity**2 + mass * g
+    g = 9.80665 #m/s^2
+    equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)  
+    drag = 0.5 * equivalent_flat_plate_area * rho * velocity**2 + mass * g
     thrust = mass * acceleration + drag
     power = thrust * velocity
     return thrust, power
@@ -143,7 +144,7 @@ deceleration = 9.81  # m/s^2
 rho = 1.225  # kg/m^3
 
 time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleration, deceleration, rho)
-#plot_results(time, altitude, velocity, thrust, power, distance) # toggle comment to plot the results
+plot_results(time, altitude, velocity, thrust, power, distance) # toggle comment to plot the results
 
 vel_climb = np.array(vel_climb)
 vel_cruise = np.array(vel_cruise)
