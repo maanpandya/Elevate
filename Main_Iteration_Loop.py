@@ -80,9 +80,15 @@ unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical t
 cruise_velocity = np.arange(10, 105, 5) #m/s 
 cruise_height = 300 #m (Design choice, could be bound by regulations)
 max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
-loaded_mission_time, loaded_mission_altitude, loaded_mission_velocity, loaded_mission_thrust, loaded_mission_power, loaded_mission_distance, loaded_mission_climb_velocity, loaded_mission_cruise_velocity, loaded_mission_descent_velocity, loaded_mission_climb_thrust, loaded_mission_cruise_thrust, loaded_mission_descent_thrust = generate_data(class_I_maximum_take_off_mass, cruise_velocity, cruise_height, cruise_height, max_acceleration, max_acceleration, air_density) #Loaded productivity mission profile
-unloaded_mission_time, unloaded_mission_altitude, unloaded_mission_velocity, unloaded_mission_thrust, unloaded_mission_power, unloaded_mission_distance, unloaded_mission_climb_velocity, unloaded_mission_cruise_velocity, unloaded_mission_descent_velocity, unloaded_mission_climb_thrust, unloaded_mission_cruise_thrust, unloaded_mission_descent_thrust = generate_data(class_I_operational_empty_mass, cruise_velocity, cruise_height, cruise_height, max_acceleration, max_acceleration, air_density) #Unloaded productivity mission profile
 
+loaded_mission_profiles = []
+unloaded_mission_profiles = []
+
+for k in range(len(cruise_velocity)):
+    loaded_mission_profile = generate_data(class_I_maximum_take_off_mass, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density) #Loaded productivity mission profile
+    unloaded_mission_profile = generate_data(class_I_operational_empty_mass, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density) #Unloaded productivity mission profile
+    loaded_mission_profiles.append(loaded_mission_profile)
+    unloaded_mission_profiles.append(unloaded_mission_profile)
 
 
 
