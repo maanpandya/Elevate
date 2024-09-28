@@ -86,8 +86,8 @@ def generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleratio
         distance[i] = current_distance  # Update total distance
         
         # make arrays to store velocity and thrust in different phases
-
-    return time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel
+    mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
+    return mission_profile
 
 def plot_results(time, altitude, velocity, thrust, power, distance):
     fig, axes = plt.subplots(3, 2, figsize=(15, 20))
@@ -143,15 +143,10 @@ acceleration = 9.81  # m/s^2
 deceleration = 9.81  # m/s^2
 rho = 1.225  # kg/m^3
 
-time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleration, deceleration, rho)
-plot_results(time, altitude, velocity, thrust, power, distance) # toggle comment to plot the results
+mission_profile = generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleration, deceleration, rho)
+#plot_results(time, altitude, velocity, thrust, power, distance) # toggle comment to plot the results
 
-vel_climb = np.array(vel_climb)
-vel_cruise = np.array(vel_cruise)
-vel_decel = np.array(vel_decel)
-thrust_climb = np.array(thrust_climb)
-thrust_cruise = np.array(thrust_cruise)
-thrust_decel = np.array(thrust_decel)
+
 
 
 

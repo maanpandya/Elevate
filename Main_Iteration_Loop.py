@@ -77,7 +77,7 @@ unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical t
 
 #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
-cruise_velocity = 20 #m/s (Design choice)
+cruise_velocity = np.arange(10, 105, 5) #m/s 
 cruise_height = 300 #m (Design choice, could be bound by regulations)
 max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
 loaded_mission_time, loaded_mission_altitude, loaded_mission_velocity, loaded_mission_thrust, loaded_mission_power, loaded_mission_distance, loaded_mission_climb_velocity, loaded_mission_cruise_velocity, loaded_mission_descent_velocity, loaded_mission_climb_thrust, loaded_mission_cruise_thrust, loaded_mission_descent_thrust = generate_data(class_I_maximum_take_off_mass, cruise_velocity, cruise_height, cruise_height, max_acceleration, max_acceleration, air_density) #Loaded productivity mission profile
