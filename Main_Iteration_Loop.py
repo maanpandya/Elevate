@@ -1,5 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from propeller_diameter import diamgenerator
+from productivity_mission_profile import generate_data
 
 #----------------------------------------------------------------------------#
 #             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
@@ -18,25 +20,165 @@ from matplotlib import pyplot as plt
 #                  INITIAL PARAMETERS AND CONSTANTS                          #
 #----------------------------------------------------------------------------#
 
-payload_mass = 93.0 #kg
+payload_masses = [57.0, 2.9, 18.2] #kg (Alex, rebar and sandbag individual masses. 93kg was the original selected payload weight)
 g = 9.80665 #m/s^2
 air_density = 1.225 #kg/m^3 (sea level)
 air_temperature = 288.15 #K (sea level)
 air_specific_heat_ratio = 1.4 #(standard conditions)
 air_gas_constant = 287.0 #(standard conditions)
 air_speed_of_sound = np.sqrt(air_specific_heat_ratio*air_gas_constant*air_temperature)
+number_of_propellers = 6.0 #Design choice
+number_of_blades = 2.0 #Design choice
+propeller_hub_diameter = 0.3 #m (Design choice, Noam)
+blade_root_chord = 0.1 #m (Design choice, Noam)
+propeller_beam_width = 0.08 #m (Design choice, Noam)
+propeller_beam_pin_height_position = 1.1 #m (Design choice, Noam)
+propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
+propeller_height_difference = 0.2 #m (Design choice, Noam)
+propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
+
+plot_sample_productivity_mission_profile = True
+
 
 #----------------------------------------------------------------------------#
 #                      CLASS I WEIGHT ESTIMATION                             #
 #----------------------------------------------------------------------------#
 
-payload_masses = np.array([100, 120, 79.8, 99.8, 113.4, 158.8, 200, 120, 150, 200, 100, 130, 95.3, 70, 180, 100]) #kg
-operational_empty_masses = np.array([260, 240, 327.1, 113.4, 195.9, 290.3, 360.2, 230, 250, 300, 300, 270, 114.8, 200, 270, 230]) #kg
-maximum_take_off_masses = np.array([360, 360, 406.9, 213.2, 309.3, 449.1, 560.2, 350, 400, 500, 400, 400, 210, 270, 450, 330]) #kg
+statistical_payload_masses = np.array([100, 120, 79.8, 99.8, 113.4, 158.8, 200, 120, 150, 200, 100, 130, 95.3, 70, 180, 100]) #kg
+statistical_operational_empty_masses = np.array([260, 240, 327.1, 113.4, 195.9, 290.3, 360.2, 230, 250, 300, 300, 270, 114.8, 200, 270, 230]) #kg
+statistical_maximum_take_off_masses = np.array([360, 360, 406.9, 213.2, 309.3, 449.1, 560.2, 350, 400, 500, 400, 400, 210, 270, 450, 330]) #kg
+slope, intercept = np.polyfit(statistical_payload_masses, statistical_operational_empty_masses, 1)
 
-slope, intercept = np.polyfit(payload_masses, operational_empty_masses, 1)
-class_one_operational_empty_mass = payload_mass*slope + intercept #kg
-class_one_maximum_take_off_mass = class_one_operational_empty_mass + payload_mass #kg
+#----------------------------------------------------------------------------#
+#                      Payload Values Generation                             #
+#----------------------------------------------------------------------------#
+
+payload_mass = []
+payload_mass_identifier = []
+for i in range(13):
+    for j in range(4):
+        payload_mass.append(payload_masses[0] + (payload_masses[1] * i) + (payload_masses[2] * j))
+        identifier = "Payload: Alex, " + str(j) + " sandbags and " + str(i) + " rebars."
+payload_mass = np.array(payload_mass) #kg (Contains all possible payload combinations)
+
+##############################################################################
+#----------------------------------------------------------------------------#
+#                        ITERATION LOOP START                                #
+#----------------------------------------------------------------------------#
+##############################################################################
+
+#--------------------Class I Weight Estimation Result------------------------#
+
+class_I_operational_empty_mass = payload_mass*slope + intercept #kg
+class_I_maximum_take_off_mass = class_I_operational_empty_mass + payload_mass #kg
+maximum_thrust_to_weight = 2.0 #Design choice, for maneuvering conditions (could be 1.5)
+maximum_maneuvering_total_thrust = class_I_maximum_take_off_mass * g * maximum_thrust_to_weight #N
+maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
+loaded_cruise_total_thrust = class_I_maximum_take_off_mass * g #N (Vertical thrust component for L=W)
+unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical thrust component for L=W)
+
+#-------------------Mission Velocity & Thrust Profiles-----------------------#
+
+cruise_velocity = np.arange(10, 105, 5) #m/s 
+cruise_height = 300 #m (Design choice, could be bound by regulations)
+max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
+
+loaded_mission_profiles = []
+unloaded_mission_profiles = []
+
+for k in range(len(cruise_velocity)):
+    print(cruise_velocity[k])
+    
+    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(500, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
+    loaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
+    loaded_mission_profiles.append(loaded_mission_profile)
+
+    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(300, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
+    unloaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
+    unloaded_mission_profiles.append(unloaded_mission_profile)
+
+
+if plot_sample_productivity_mission_profile:
+
+    fig, axes = plt.subplots(2, 3, figsize=(12, 6)) 
+
+    fig.tight_layout(pad=3.0)
+
+    # Subplot 1: Altitude vs Time
+    axes[0, 0].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][1], label="Loaded") 
+    axes[0, 0].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[0, 0].set_title('Altitude vs Time')  
+    axes[0, 0].set_xlabel('Time (s)')  
+    axes[0, 0].set_ylabel('Altitude (m)') 
+    axes[0, 0].legend()
+    axes[0, 0].grid(True)
+
+    # Subplot 2: Velocity vs Time
+    axes[0, 1].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][2], label="Loaded") 
+    axes[0, 1].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[0, 1].set_title('Velocity vs Time')  
+    axes[0, 1].set_xlabel('Time (s)')  
+    axes[0, 1].set_ylabel('Velocity (m/s)') 
+    axes[0, 1].legend()
+    axes[0, 1].grid(True)
+
+    # Subplot 3: Thrust vs Time
+    axes[0, 2].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][3], label="Loaded") 
+    axes[0, 2].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[0, 2].set_title('Thrust vs Time')  
+    axes[0, 2].set_xlabel('Time (s)')  
+    axes[0, 2].set_ylabel('Thrust (N)') 
+    axes[0, 2].legend()
+    axes[0, 2].grid(True)
+
+    # Subplot 4: Altitude vs Distance
+    axes[1, 0].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][1], label="Loaded") 
+    axes[1, 0].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[1, 0].set_title('Altitude vs Distance')  
+    axes[1, 0].set_xlabel('Distance (m)')  
+    axes[1, 0].set_ylabel('Altitude (m)') 
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+
+    # Subplot 5: Velocity vs Distance
+    axes[1, 1].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][2], label="Loaded") 
+    axes[1, 1].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[1, 1].set_title('Velocity vs Distance')  
+    axes[1, 1].set_xlabel('Distance (m)')  
+    axes[1, 1].set_ylabel('Velocity (m/s)') 
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+
+    # Subplot 6: Thrust vs Distance
+    axes[1, 2].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][3], label="Loaded") 
+    axes[1, 2].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[1, 2].set_title('Thrust vs Distance')  
+    axes[1, 2].set_xlabel('Distance (m)')  
+    axes[1, 2].set_ylabel('Thrust (N)') 
+    axes[1, 2].legend()
+    axes[1, 2].grid(True)
+
+    plt.show()
+
+
+
+
+propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
+propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
+total_propeller_area_max = propeller_area_max * number_of_propellers #m^2
+disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area_max #kg/m^2
+statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
+statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
+statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
+propeller_diameter_min = 2.0 * np.sqrt(single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
+propeller_diameter = np.linspace(propeller_diameter_min, propeller_diameter_max, 50) #m^2 
+
+blade_tip_mach_number = 0.7 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
+blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
+propeller_angular_velocity = blade_tip_velocity / (propeller_diameter / 2.0) #rad/s
+
+
+
 
 #----------------------------------------------------------------------------#
 #                    CLASS II WEIGHT ESTIMATION                              #
@@ -45,6 +187,13 @@ class_one_maximum_take_off_mass = class_one_operational_empty_mass + payload_mas
 #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
 #Obtained from Rimaz's code
+#time = 
+#climb_velocity_profile = 
+#descent_velocity_profile = 
+#cruise_velocity_profile = 
+#climb_thrust_profile = 
+#descent_thrust_profile = 
+#cruise_thrust_profile = 
 
 
 #----------------------Propeller Optimization Loop---------------------------#
@@ -73,7 +222,7 @@ total_propeller_area = (maximum_maneuvering_total_thrust / g) / disk_loading #m^
 single_propeller_area = total_propeller_area / number_of_propellers #m^2
 propeller_diameter = 2 * np.sqrt(single_propeller_area / np.pi) #m
 blade_tip_velocity = (propeller_diameter / 2) * propeller_angular_velocity #m/s
-blade_tip_mach_numer = blade_tip_velocity / air_speed_of_sound
+
 loaded_cruise_total_thrust = class_one_maximum_take_off_mass * g #N
 unloaded_cruise_total_thrust = class_one_operational_empty_mass * g #N
 

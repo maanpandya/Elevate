@@ -54,5 +54,5 @@ def diamgenerator(config, N_blades, D_hub, Cr_blade, W_arm, W_pin, H_pin, H_prop
     return (D_max)
 
 
-D = diamgenerator("hori_fold", 4, 0.3, 0.1, 0.08, 0.5, 1.1, 0.2)
-print(D)
+#D = diamgenerator("hori_fold", 2, 0.3, 0.1, 0.08, 0.5, 1.1, 0.2)
+#print(D)
