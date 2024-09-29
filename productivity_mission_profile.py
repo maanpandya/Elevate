@@ -86,7 +86,12 @@ def generate_data(mass, max_speed, climb_altitude, descent_altitude, acceleratio
         distance[i] = current_distance  # Update total distance
         
         # make arrays to store velocity and thrust in different phases
-
+    vel_climb = np.array(vel_climb)
+    vel_cruise = np.array(vel_cruise)
+    vel_decel = np.array(vel_decel)
+    thrust_climb = np.array(thrust_climb)
+    thrust_cruise = np.array(thrust_cruise)
+    thrust_decel = np.array(thrust_decel)
     return time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel
 
 def plot_results(time, altitude, velocity, thrust, power, distance):

@@ -83,19 +83,29 @@ cruise_velocity = np.arange(10, 105, 5) #m/s
 cruise_height = 300 #m (Design choice, could be bound by regulations)
 max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
 
-loaded_mission_profiles = []
-unloaded_mission_profiles = []
+productivty_mission_profiles = [] #Contains the profile of the productivity mission for the different payload options
+#It contains as many profiles as payload options, for each you have the mission profile corresponding to a certain cruise velocity and
+#inside this components you have the loaded and unloaded mission profile together with the corresponding cruise velocity.
 
-for k in range(len(cruise_velocity)):
-    print(cruise_velocity[k])
-    
-    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(500, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
-    loaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
-    loaded_mission_profiles.append(loaded_mission_profile)
+#Loop through each payload option and all cruise velocity options 
+for h in range(len(payload_mass)):
 
-    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(300, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
-    unloaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
-    unloaded_mission_profiles.append(unloaded_mission_profile)
+    payload_specific_productivity_mission_profile = []
+
+    for k in range(len(cruise_velocity)):
+
+        #Loaded mission profile
+        time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(500, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
+        loaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
+        
+        #Unloaded mission profile
+        time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(300, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
+        unloaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
+       
+        velocity_specific_productivty_mission_profile = [loaded_mission_profile, unloaded_mission_profile, cruise_velocity[k]]
+        payload_specific_productivity_mission_profile.append(velocity_specific_productivty_mission_profile)
+
+    productivty_mission_profiles.append(payload_specific_productivity_mission_profile)
 
 
 if plot_sample_productivity_mission_profile:
@@ -105,8 +115,8 @@ if plot_sample_productivity_mission_profile:
     fig.tight_layout(pad=3.0)
 
     # Subplot 1: Altitude vs Time
-    axes[0, 0].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][1], label="Loaded") 
-    axes[0, 0].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[0, 0].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][1], label="Loaded") 
+    axes[0, 0].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][1], label="Unloaded") 
     axes[0, 0].set_title('Altitude vs Time')  
     axes[0, 0].set_xlabel('Time (s)')  
     axes[0, 0].set_ylabel('Altitude (m)') 
@@ -114,8 +124,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 0].grid(True)
 
     # Subplot 2: Velocity vs Time
-    axes[0, 1].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][2], label="Loaded") 
-    axes[0, 1].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[0, 1].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][2], label="Loaded") 
+    axes[0, 1].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][2], label="Unloaded") 
     axes[0, 1].set_title('Velocity vs Time')  
     axes[0, 1].set_xlabel('Time (s)')  
     axes[0, 1].set_ylabel('Velocity (m/s)') 
@@ -123,8 +133,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 1].grid(True)
 
     # Subplot 3: Thrust vs Time
-    axes[0, 2].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][3], label="Loaded") 
-    axes[0, 2].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[0, 2].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][3], label="Loaded") 
+    axes[0, 2].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][3], label="Unloaded") 
     axes[0, 2].set_title('Thrust vs Time')  
     axes[0, 2].set_xlabel('Time (s)')  
     axes[0, 2].set_ylabel('Thrust (N)') 
@@ -132,8 +142,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 2].grid(True)
 
     # Subplot 4: Altitude vs Distance
-    axes[1, 0].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][1], label="Loaded") 
-    axes[1, 0].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[1, 0].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][1], label="Loaded") 
+    axes[1, 0].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][1], label="Unloaded") 
     axes[1, 0].set_title('Altitude vs Distance')  
     axes[1, 0].set_xlabel('Distance (m)')  
     axes[1, 0].set_ylabel('Altitude (m)') 
@@ -141,8 +151,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 0].grid(True)
 
     # Subplot 5: Velocity vs Distance
-    axes[1, 1].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][2], label="Loaded") 
-    axes[1, 1].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[1, 1].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][2], label="Loaded") 
+    axes[1, 1].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][2], label="Unloaded") 
     axes[1, 1].set_title('Velocity vs Distance')  
     axes[1, 1].set_xlabel('Distance (m)')  
     axes[1, 1].set_ylabel('Velocity (m/s)') 
@@ -150,8 +160,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 1].grid(True)
 
     # Subplot 6: Thrust vs Distance
-    axes[1, 2].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][3], label="Loaded") 
-    axes[1, 2].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[1, 2].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][3], label="Loaded") 
+    axes[1, 2].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][3], label="Unloaded") 
     axes[1, 2].set_title('Thrust vs Distance')  
     axes[1, 2].set_xlabel('Distance (m)')  
     axes[1, 2].set_ylabel('Thrust (N)') 
