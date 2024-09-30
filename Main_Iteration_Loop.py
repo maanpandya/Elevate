@@ -376,7 +376,7 @@ run_climb_energy = vertical_climb_power_values * (climb_time * single_charge_fli
 run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_charge_flight_number) #J
 run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
 total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
-
+#fhi
 
 #-------------------Component Weight Estimation-----------------------#
 
