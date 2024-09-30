@@ -16,10 +16,9 @@ B=2
 foil = 'NACA 4415'
 foilpath = foil.replace(" ", "_")
 
-def design(D, T_hv):
+def design(D, T_hv, V):
     #print(T_hv)
     nr_sect = 100
-    V=0.001
     D_hub = 0.3048
     mach_tip = 0.6
     zeta_acc = 0.001
@@ -89,6 +88,8 @@ def design(D, T_hv):
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
+    print(c)
+    print(beta)
     return r, c, beta, phi, Re, omega, P
 
 def powers(D, T_hv, lst):
@@ -270,6 +271,6 @@ def powers(D, T_hv, lst):
 
     return powers
 
-print(powers(D=0.3048 * 5.75, T_hv=923, lst=[[923, 3.47, 20]]))
-
+design(3, 923, 0.001)
+design(3, 1000, 3.5)
 

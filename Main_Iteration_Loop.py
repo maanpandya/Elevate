@@ -37,7 +37,7 @@ propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
 propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 
-plot_sample_productivity_mission_profile = True
+plot_sample_productivity_mission_profile = False
 
 
 #----------------------------------------------------------------------------#
@@ -97,10 +97,10 @@ for h in range(len(payload_mass)):
 
         #Loaded mission profile
         time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
-        thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust)
+        thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust[h])
         thrust_cruise_horizontal = thrust_cruise
         thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
-        cruise_angle_of_attack = np.atan2(thrust_cruise_vertical, thrust_cruise_horizontal)
+        cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
         rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
         rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
         
@@ -108,10 +108,10 @@ for h in range(len(payload_mass)):
         
         #Unloaded mission profile
         time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
-        thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust)
+        thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust[h])
         thrust_cruise_horizontal = thrust_cruise
         thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
-        cruise_angle_of_attack = np.atan2(thrust_cruise_vertical, thrust_cruise_horizontal)
+        cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
         rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
         rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
 
@@ -198,7 +198,7 @@ disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area
 statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
 statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
 statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
-propeller_diameter_min = 2.0 * np.sqrt(single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
+propeller_diameter_min = 2.0 * np.sqrt(statistical_single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
 
 #Set a range of rotor sizes to try from the statistical minimum to the geometrical maximum
 propeller_diameter = np.linspace(propeller_diameter_min, propeller_diameter_max, 50) #m
@@ -221,11 +221,12 @@ propeller_angular_velocity = blade_tip_velocity / (propeller_diameter / 2.0) #ra
 
 
 
-#vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
-#vertical_descent_speed = -2.5 #m/s (Literature but can be variable too)
+
 
 #--------------------Analytical Rotor Power Estimation------------------------#
 
+vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
+vertical_descent_speed = -2.5 #m/s (Literature but can be variable too)
 rotor_solidity = 0.065 #(running variable between 0.05-0.08, or obtained from Tamas)
 blade_profile_drag_coefficient = 0.01 #Literature (basic helicopter aerodynamics by Seddon)
 hover_correction_factor = 1.15 #Literature (basic helicopter aerodynamics by Seddon)
@@ -234,37 +235,47 @@ cruise_blade_profile_drag_correction_factor = 4.65 ##Literature (basic helicopte
 airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
 for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
-    for l in range(len(propeller_diameter)): #Loop over each rotor size for 1 payload value
-        for j in range(len(productivty_mission_profiles[n])): #Loop over each mission profile for 1 rotor and 1 payload value
-                for g in range(2): #Loop through either a loaded or unloaded mission
+    for j in range(len(productivty_mission_profiles[n])): #Loop over each mission profile for 1 payload type
+        mission_velocity_specific_power_values = []
+        for l in range(len(propeller_diameter)): #Loop over each rotor size for 1 mission profile and payload type
+            propeller_specific_power_values = [propeller_diameter[l]] #List contains the propeller size and corresponding loaded and unloaded power values
+            for g in range(2): #Loop through 1 loaded and 1 unloaded flight
+                power_values = []
 
-                    hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7], loaded_cruise_total_thrust / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity))
-                    cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
-                    induced_hower_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
+                #Hover Power 
+               
+                print(propeller_diameter[0])
+               
+                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
+                induced_hover_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
+                profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8.0
+                hover_power = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * propeller_area[l] * number_of_propellers * blade_tip_velocity * blade_tip_velocity * blade_tip_velocity #W
+                power_values.append(hover_power)
 
+                #Climb and descent power
+                thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(productivty_mission_profiles[n][j][g][7] / (2.0 * air_density * propeller_area[l] * number_of_propellers)) #m/s
+                climb_power = hover_power * ((vertical_climb_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_climb_speed / (2 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1)) #W
+                if abs(vertical_descent_speed) >= (2.0 * thrust_equivalent_vertical_flight_induced_velocity):
+                    descent_power = hover_power * ((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1.0)) #W
+                else:
+                    descent_power = hover_power #W
+                power_values.append(climb_power)
+                power_values.append(descent_power)
 
-induced_hover_power_coefficient = (hover_correction_factor * (thrust_coefficient**(3/2))) / (np.sqrt(2))
-profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8
-hover_power_values = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * total_propeller_area * (blade_tip_velocity**3) #W
-
-thrust_equivalent_vertical_flight_induced_velocity = np.sqrt((thrust_values)/(2 * air_density * total_propeller_area)) #m/s
-vertical_climb_power_values = hover_power_values * ((vertical_climb_speed/(2 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_climb_speed/(2 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1))
-vertical_descent_climb_power_values = []
-for i in range(len(thrust_equivalent_vertical_flight_induced_velocity)):
-    if abs(vertical_descent_speed) >= (2 * thrust_equivalent_vertical_flight_induced_velocity[i]):
-        descent_power = hover_power_values[i] * ((vertical_descent_speed/(2 * thrust_equivalent_vertical_flight_induced_velocity[i])) + np.sqrt((vertical_descent_speed/(2 * thrust_equivalent_vertical_flight_induced_velocity[i]))**2 + 1))
-        vertical_descent_climb_power_values.append(descent_power)
-    else:
-        vertical_descent_climb_power_values.append(hover_power_values[i])
-vertical_descent_climb_power_values = np.array(vertical_descent_climb_power_values) #W
-
-cruise_induced_velocity = np.sqrt(-0.5 * cruise_speed**2 + 0.5 * np.sqrt(cruise_speed**4 + 4 * (thrust_values/(2 * air_density * total_propeller_area))**2)) #m/s
-cruise_induced_velocity_inflow_factor = cruise_induced_velocity / blade_tip_velocity
-cruise_advance_ratio = cruise_speed / blade_tip_velocity
-induced_cruise_power_coefficient = cruise_correction_factor * thrust_coefficient * cruise_induced_velocity_inflow_factor
-cruise_profile_power_coefficient = 1/8 * rotor_solidity * blade_profile_drag_coefficient * (1 + cruise_blade_profile_drag_correction_factor * cruise_advance_ratio**2)
-cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / total_propeller_area
-cruise_power_values = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * total_propeller_area * blade_tip_velocity**3 #W
+                #Cruise power
+                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
+                cruise_induced_velocity = np.sqrt(-0.5 * productivty_mission_profiles[n][j][2] * productivty_mission_profiles[n][j][2] + 0.5 * np.sqrt(productivty_mission_profiles[n][j][2]**4 + 4.0 * (productivty_mission_profiles[n][j][g][10] / (2.0 * air_density * propeller_area[l] * number_of_propellers))**2)) #m/s
+                cruise_induced_velocity_inflow_factor = cruise_induced_velocity / blade_tip_velocity
+                cruise_advance_ratio = productivty_mission_profiles[n][j][2] / blade_tip_velocity
+                induced_cruise_power_coefficient = cruise_correction_factor * cruise_thrust_coefficient * cruise_induced_velocity_inflow_factor
+                cruise_profile_power_coefficient = 0.125 * rotor_solidity * blade_profile_drag_coefficient * (1 + cruise_blade_profile_drag_correction_factor * cruise_advance_ratio * cruise_advance_ratio)
+                cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (propeller_area[l] * number_of_propellers)
+                cruise_power = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * propeller_area[l] * number_of_propellers * blade_tip_velocity**3 #W
+                power_values.append(cruise_power)
+                
+                propeller_specific_power_values.append(power_values)
+            mission_velocity_specific_power_values.append(propeller_specific_power_values)
+        productivty_mission_profiles[n][j].append(mission_velocity_specific_power_values)
 
 
 #-------------------Productivity Mission Modelling-----------------------#
@@ -273,8 +284,8 @@ cruise_power_values = (induced_cruise_power_coefficient + cruise_profile_power_c
 # Mission starts with unloaded flight, then loaded and repeating this pattern until 90 minutes runs out, trying to get as close as possible.
 # The mission is defined as the sum of all runs and one run can be any defined number of flights
 # Each run is flown with a new battery pack
-cruise_distance = 3000.0  # m (Mission requirement, single flight distance)
-cruise_height = 100.0  # m (Design choice, might be modified due to regulations)
+cruise_distance = mission_distance  # m (Mission requirement, single flight distance)
+cruise_height = cruise_height  # m (Design choice, might be modified due to regulations)
 loiter_hover_time = 40.0  # s (both at start and end of the entire mission, could be modified due to regulations)
 climb_time = cruise_height / vertical_climb_speed  # s (Time to climb to the required altitude, descent time is the same)
 cruise_time = cruise_distance / cruise_speed  # s (Time to cover the single flight distance)
