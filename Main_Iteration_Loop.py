@@ -82,20 +82,46 @@ unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical t
 cruise_velocity = np.arange(10, 105, 5) #m/s 
 cruise_height = 300 #m (Design choice, could be bound by regulations)
 max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
+mission_distance = 3000.0 #m
 
-loaded_mission_profiles = []
-unloaded_mission_profiles = []
+productivty_mission_profiles = [] #Contains the profile of the productivity mission for the different payload options
+#It contains as many profiles as payload options, for each you have the mission profile corresponding to a certain cruise velocity and
+#inside this components you have the loaded and unloaded mission profile together with the corresponding cruise velocity.
 
-for k in range(len(cruise_velocity)):
-    print(cruise_velocity[k])
-    
-    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(500, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
-    loaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
-    loaded_mission_profiles.append(loaded_mission_profile)
+#Loop through each payload option and all cruise velocity options 
+for h in range(len(payload_mass)):
 
-    time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel = generate_data(300, cruise_velocity[k], cruise_height, cruise_height, max_acceleration, max_acceleration, air_density)
-    unloaded_mission_profile = [time, altitude, velocity, thrust, power, distance, vel_climb, vel_cruise, vel_decel, thrust_climb, thrust_cruise, thrust_decel]
-    unloaded_mission_profiles.append(unloaded_mission_profile)
+    payload_specific_productivity_mission_profile = []
+
+    for k in range(len(cruise_velocity)):
+
+        #Loaded mission profile
+        time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+        thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust)
+        thrust_cruise_horizontal = thrust_cruise
+        thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
+        cruise_angle_of_attack = np.atan2(thrust_cruise_vertical, thrust_cruise_horizontal)
+        rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
+        rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+        
+        loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+        
+        #Unloaded mission profile
+        time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+        thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust)
+        thrust_cruise_horizontal = thrust_cruise
+        thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
+        cruise_angle_of_attack = np.atan2(thrust_cruise_vertical, thrust_cruise_horizontal)
+        rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
+        rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+
+        unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+
+
+        velocity_specific_productivty_mission_profile = [loaded_mission_profile, unloaded_mission_profile, cruise_velocity[k]]
+        payload_specific_productivity_mission_profile.append(velocity_specific_productivty_mission_profile)
+
+    productivty_mission_profiles.append(payload_specific_productivity_mission_profile)
 
 
 if plot_sample_productivity_mission_profile:
@@ -105,8 +131,8 @@ if plot_sample_productivity_mission_profile:
     fig.tight_layout(pad=3.0)
 
     # Subplot 1: Altitude vs Time
-    axes[0, 0].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][1], label="Loaded") 
-    axes[0, 0].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[0, 0].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][1], label="Loaded") 
+    axes[0, 0].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][1], label="Unloaded") 
     axes[0, 0].set_title('Altitude vs Time')  
     axes[0, 0].set_xlabel('Time (s)')  
     axes[0, 0].set_ylabel('Altitude (m)') 
@@ -114,8 +140,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 0].grid(True)
 
     # Subplot 2: Velocity vs Time
-    axes[0, 1].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][2], label="Loaded") 
-    axes[0, 1].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[0, 1].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][2], label="Loaded") 
+    axes[0, 1].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][2], label="Unloaded") 
     axes[0, 1].set_title('Velocity vs Time')  
     axes[0, 1].set_xlabel('Time (s)')  
     axes[0, 1].set_ylabel('Velocity (m/s)') 
@@ -123,8 +149,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 1].grid(True)
 
     # Subplot 3: Thrust vs Time
-    axes[0, 2].plot(loaded_mission_profiles[0][0], loaded_mission_profiles[0][3], label="Loaded") 
-    axes[0, 2].plot(unloaded_mission_profiles[0][0], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[0, 2].plot(productivty_mission_profiles[0][0][0][0], productivty_mission_profiles[0][0][0][3], label="Loaded") 
+    axes[0, 2].plot(productivty_mission_profiles[0][0][1][0], productivty_mission_profiles[0][0][1][3], label="Unloaded") 
     axes[0, 2].set_title('Thrust vs Time')  
     axes[0, 2].set_xlabel('Time (s)')  
     axes[0, 2].set_ylabel('Thrust (N)') 
@@ -132,8 +158,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 2].grid(True)
 
     # Subplot 4: Altitude vs Distance
-    axes[1, 0].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][1], label="Loaded") 
-    axes[1, 0].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][1], label="Unloaded") 
+    axes[1, 0].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][1], label="Loaded") 
+    axes[1, 0].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][1], label="Unloaded") 
     axes[1, 0].set_title('Altitude vs Distance')  
     axes[1, 0].set_xlabel('Distance (m)')  
     axes[1, 0].set_ylabel('Altitude (m)') 
@@ -141,8 +167,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 0].grid(True)
 
     # Subplot 5: Velocity vs Distance
-    axes[1, 1].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][2], label="Loaded") 
-    axes[1, 1].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][2], label="Unloaded") 
+    axes[1, 1].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][2], label="Loaded") 
+    axes[1, 1].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][2], label="Unloaded") 
     axes[1, 1].set_title('Velocity vs Distance')  
     axes[1, 1].set_xlabel('Distance (m)')  
     axes[1, 1].set_ylabel('Velocity (m/s)') 
@@ -150,8 +176,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 1].grid(True)
 
     # Subplot 6: Thrust vs Distance
-    axes[1, 2].plot(loaded_mission_profiles[0][5], loaded_mission_profiles[0][3], label="Loaded") 
-    axes[1, 2].plot(unloaded_mission_profiles[0][5], unloaded_mission_profiles[0][3], label="Unloaded") 
+    axes[1, 2].plot(productivty_mission_profiles[0][0][0][5], productivty_mission_profiles[0][0][0][3], label="Loaded") 
+    axes[1, 2].plot(productivty_mission_profiles[0][0][1][5], productivty_mission_profiles[0][0][1][3], label="Unloaded") 
     axes[1, 2].set_title('Thrust vs Distance')  
     axes[1, 2].set_xlabel('Distance (m)')  
     axes[1, 2].set_ylabel('Thrust (N)') 
@@ -160,77 +186,63 @@ if plot_sample_productivity_mission_profile:
 
     plt.show()
 
+#-------------------------Rotor Sizing----------------------------#
 
-
-
+#First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
 propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
 propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
 total_propeller_area_max = propeller_area_max * number_of_propellers #m^2
 disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area_max #kg/m^2
+
+#Estimate rotor size according to statistics, assuming it gives smaller size than from the geometrical limitations
 statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
 statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
 statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
 propeller_diameter_min = 2.0 * np.sqrt(single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
-propeller_diameter = np.linspace(propeller_diameter_min, propeller_diameter_max, 50) #m^2 
 
+#Set a range of rotor sizes to try from the statistical minimum to the geometrical maximum
+propeller_diameter = np.linspace(propeller_diameter_min, propeller_diameter_max, 50) #m
+propeller_area = np.pi * (propeller_diameter / 2.0) * (propeller_diameter / 2.0) #m^2  
 blade_tip_mach_number = 0.7 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
 blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
 propeller_angular_velocity = blade_tip_velocity / (propeller_diameter / 2.0) #rad/s
 
 
-
-
 #----------------------------------------------------------------------------#
-#                    CLASS II WEIGHT ESTIMATION                              #
+#                        CLASS II WEIGHT ESTIMATION                          #
 #----------------------------------------------------------------------------#
 
-#-------------------Mission Velocity & Thrust Profiles-----------------------#
-
-#Obtained from Rimaz's code
-#time = 
-#climb_velocity_profile = 
-#descent_velocity_profile = 
-#cruise_velocity_profile = 
-#climb_thrust_profile = 
-#descent_thrust_profile = 
-#cruise_thrust_profile = 
-
-
-#----------------------Propeller Optimization Loop---------------------------#
+#--------------Rotor Geometry Design and Power Estimation--------------------#
 
 #Obtained from Tamas's code
 
 
-thrust_to_weight = 2.0 #Design choice, for maneuvering conditions (could be 1.5)
-number_of_propellers = 6.0 #Design choice (variable)
-disk_loading = 98.0 #kg/m^2 (disk loading source)
-number_of_blades = 2.0 #Design choice (variable)
-propeller_angular_velocity = 418.8792 #rad/s (variable)
-rotor_solidity = 0.065 #(running variable between 0.05-0.08)
+
+
+
+
+#vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
+#vertical_descent_speed = -2.5 #m/s (Literature but can be variable too)
+
+#--------------------Analytical Rotor Power Estimation------------------------#
+
+rotor_solidity = 0.065 #(running variable between 0.05-0.08, or obtained from Tamas)
 blade_profile_drag_coefficient = 0.01 #Literature (basic helicopter aerodynamics by Seddon)
 hover_correction_factor = 1.15 #Literature (basic helicopter aerodynamics by Seddon)
 cruise_correction_factor = 1.2 #Literature (basic helicopter aerodynamics by Seddon)
 cruise_blade_profile_drag_correction_factor = 4.65 ##Literature (basic helicopter aerodynamics by Seddon), can run between 4.5-4.7
 airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
-vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
-vertical_descent_speed = -2.5 #m/s (Literature but can be variable too)
-cruise_speed = 20.0 #m/s (Design choice but can be variable)
 
-maximum_maneuvering_total_thrust = class_one_maximum_take_off_mass * g * thrust_to_weight #N
-maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
-total_propeller_area = (maximum_maneuvering_total_thrust / g) / disk_loading #m^2
-single_propeller_area = total_propeller_area / number_of_propellers #m^2
-propeller_diameter = 2 * np.sqrt(single_propeller_area / np.pi) #m
-blade_tip_velocity = (propeller_diameter / 2) * propeller_angular_velocity #m/s
+for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
+    for l in range(len(propeller_diameter)): #Loop over each rotor size for 1 payload value
+        for j in range(len(productivty_mission_profiles[n])): #Loop over each mission profile for 1 rotor and 1 payload value
+                for g in range(2): #Loop through either a loaded or unloaded mission
 
-loaded_cruise_total_thrust = class_one_maximum_take_off_mass * g #N
-unloaded_cruise_total_thrust = class_one_operational_empty_mass * g #N
+                    hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7], loaded_cruise_total_thrust / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity))
+                    cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
+                    induced_hower_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
 
-#Arrays for power calculations, ordered as maneuvering (T/W=2 and maximum weight), loaded (T/W=1 and maximum weight) and unloaded (T/W=1 and no payload)
-weight_values = np.array([class_one_maximum_take_off_mass, class_one_maximum_take_off_mass, class_one_operational_empty_mass]) #kg
-thrust_values = np.array([maximum_maneuvering_total_thrust, loaded_cruise_total_thrust, unloaded_cruise_total_thrust]) #N
 
-thrust_coefficient = thrust_values / (air_density * total_propeller_area * (blade_tip_velocity**2))
 induced_hover_power_coefficient = (hover_correction_factor * (thrust_coefficient**(3/2))) / (np.sqrt(2))
 profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8
 hover_power_values = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * total_propeller_area * (blade_tip_velocity**3) #W
@@ -366,7 +378,6 @@ run_climb_energy = vertical_climb_power_values * (climb_time * single_charge_fli
 run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_charge_flight_number) #J
 run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
 total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
-
 
 #-------------------Component Weight Estimation-----------------------#
 
