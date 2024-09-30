@@ -93,7 +93,10 @@ def design(D, T_hv, V):
     return r, c, beta, phi, Re, omega, P
 
 def powers(D, T_hv, lst):
-    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv)
+    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv, 0.001)
+
+    powers = [r, c, beta, P_hv]
+
     #print(P_hv)
     nr_sect=np.size(r)
     R=r[-1]
@@ -105,7 +108,7 @@ def powers(D, T_hv, lst):
     with open('AirfoilData/' + foilpath + '/cd_func.pkl', 'rb') as file:
         cd_func = pickle.load(file)
 
-    powers=[P_hv]
+
     for point in lst:
         if len(point)==2:
             T_conv, V_n = point
@@ -119,11 +122,9 @@ def powers(D, T_hv, lst):
         Re = Re_hv
 
         while np.abs((T_conv-T)/T_conv)>0.001:
-            i_lst = []
-            a_lst = []
             a_prev = np.full(1, nr_sect)
             a = np.zeros(nr_sect)
-            while not np.max(np.abs((a - a_prev) / a_prev)) < 0.001:
+            while not np.max(np.abs((a - a_prev) / a_prev)) < 0.0005:
                 f=B/2*(1-xi)/np.sin(np.arctan2(xi*np.tan(phi),1))
                 F=2/np.pi*np.arccos(np.exp(-f))
                 alpha=beta-phi
@@ -189,9 +190,6 @@ def powers(D, T_hv, lst):
                 phi=phi_eq
                 Re=Re_eq
 
-                i_lst=[]
-                i=0
-                a_lst=[]
                 a_prev=np.full(1, nr_sect)
                 a=np.zeros(nr_sect)
                 while not np.max(np.abs((a-a_prev)/a_prev))<0.0005:
@@ -256,10 +254,10 @@ def powers(D, T_hv, lst):
 
             plt.title(f'psi={psi}')
             plt.show()
-            print(C_P_prime)
-            print(f'P: {P}')
-            print(f'T: {T}')
-            print(f'blade_drag: {blade_drag}')
+            #print(C_P_prime)
+            #print(f'P: {P}')
+            #print(f'T: {T}')
+            #print(f'blade_drag: {blade_drag}')
             print()
             #plt.title(f'omega={omega}, psi={psi}')
             #plt.show()
@@ -271,6 +269,7 @@ def powers(D, T_hv, lst):
 
     return powers
 
-design(3, 923, 0.001)
-design(3, 1000, 3.5)
+print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
+
+#print(design(3, 1100, 3.47))
 
