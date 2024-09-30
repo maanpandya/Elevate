@@ -159,19 +159,7 @@ def plot_results(time, altitude, velocity, thrust, power, horizontal_distance, v
     plt.tight_layout()
     plt.show()
 
-time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, \
-thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(
-    mass=500,  # kg
-    max_speed=20,  # m/s
-    climb_altitude=100,  # m
-    cruise_distance=2000,  # m
-    descent_altitude=100,  # m
-    acceleration=9.81,  # m/s^2
-    deceleration=9.81  # m/s^2
-)
 
-
-plot_results(time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance)
 
 
 
