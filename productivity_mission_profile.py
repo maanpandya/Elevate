@@ -46,6 +46,7 @@ def generate_data(mass, max_speed, climb_altitude, cruise_distance, descent_alti
     altitude = np.zeros_like(time)
     velocity = np.zeros_like(time)
     thrust = np.zeros_like(time)
+    
     power = np.zeros_like(time)
     horizontal_distance = np.zeros_like(time)
     vertical_distance = np.zeros_like(time)
