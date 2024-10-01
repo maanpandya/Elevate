@@ -214,22 +214,6 @@ if plot_sample_productivity_mission_profile:
 #                        CLASS II WEIGHT ESTIMATION                          #
 #----------------------------------------------------------------------------#
 
-#--------------Rotor Geometry Design and Power Estimation--------------------#
-
-for s in range(len(productivty_mission_profiles)): #Loop over each payload combination
-    for q in range(len(productivty_mission_profiles[s])) #Loop over each mission profile for 1 payload type
-        mission_velocity_specific_power_values = []
-        for r in range(len(productivty_mission_profiles[s][q][3][0])): #Loop over each rotor size for 1 mission profile and payload type
-            propeller_specific_power_values = [productivty_mission_profiles[s][q][3][0][r]] #List contains the propeller size and corresponding loaded and unloaded power values
-            for t in range(2): #Loop through 1 loaded and 1 unloaded flight
-                print("t")
-
-
-
-
-
-
-
 #--------------------Analytical Rotor Power Estimation------------------------#
 
 vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
@@ -323,6 +307,56 @@ for n in range(len(productivty_mission_profiles)): #Loop over each payload combi
                 
             mission_velocity_specific_power_values.append(propeller_specific_power_values)
         productivty_mission_profiles[n][j][3].append(mission_velocity_specific_power_values)
+
+#--------------Rotor Geometry Design and Power Estimation--------------------#
+
+for s in range(len(productivty_mission_profiles)): #Loop over each payload combination
+    for q in range(len(productivty_mission_profiles[s])): #Loop over each mission profile for 1 payload type
+        mission_velocity_specific_power_values = []
+        for r in range(len(productivty_mission_profiles[s][q][3][0])): #Loop over each rotor size for 1 mission profile and payload type
+            propeller_specific_power_values = [productivty_mission_profiles[s][q][3][0][r]] #List contains the propeller size and corresponding loaded and unloaded power values
+            
+            #Hover, cruise, climb and descent powers all obtained at once
+
+            loaded_climb_mission = [np.mean(productivty_mission_profiles[s][q][0][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+            unloaded_climb_mission = [np.mean(productivty_mission_profiles[s][q][1][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+            loaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][0][15]), np.mean(productivty_mission_profiles[s][q][0][16])] #Using average value of thrust and velocities
+            unloaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][1][15]), np.mean(productivty_mission_profiles[s][q][1][16])] #Using average value of thrust and velocities
+            missions_list = [loaded_climb_mission, unloaded_climb_mission, loaded_cruise_mission, unloaded_cruise_mission]
+
+            propeller_values = powers(D=productivty_mission_profiles[s][q][3][0], T_hv=(loaded_cruise_total_thrust[s] / number_of_propellers), lst=missions_list)
+
+            radial_position_values = propeller_values[0]
+            chord_values = propeller_values[1] #m
+            twist_values = propeller_values[2] #rad
+            loaded_hover_power = propeller_values[3] #W
+            unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[s]/loaded_cruise_total_thrust[s]) #W (Scale the hover power for the unloaded one)
+            loaded_climb_power = propeller_values[4][0] #W
+            loaded_climb_blade_drag = propeller_values[4][1] #N
+            unloaded_climb_power = propeller_values[5][0] #W
+            unloaded_climb_blade_drag = propeller_values[5][1] #N
+            loaded_descent_power = loaded_hover_power #W
+            loaded_descent_blade_drag = loaded_climb_blade_drag #N
+            unloaded_descent_power = unloaded_hover_power #W
+            unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
+            loaded_cruise_power = propeller_values[6][0] #W
+            loaded_cruise_blade_drag = propeller_values[6][1] #N
+            unloaded_cruise_power = propeller_values[7][0] #W
+            unloaded_cruise_blade_drag = propeller_values[7][1] #N
+
+            loaded_power_values = [loaded_hover_power, loaded_climb_power, loaded_descent_power, loaded_cruise_power]
+            unloaded_power_values = [unloaded_hover_power, unloaded_climb_power, unloaded_descent_power, unloaded_cruise_power]
+            loaded_blade_drag_values = [loaded_climb_blade_drag, loaded_descent_blade_drag, loaded_cruise_blade_drag]
+            unloaded_blade_drag_values = [unloaded_climb_blade_drag, unloaded_descent_blade_drag, unloaded_cruise_blade_drag]
+            propeller_geometry = [radial_position_values, chord_values, twist_values]
+            propeller_specific_power_values.append(loaded_power_values)
+            propeller_specific_power_values.append(unloaded_power_values)
+            propeller_specific_power_values.append(loaded_blade_drag_values)
+            propeller_specific_power_values.append(unloaded_blade_drag_values)
+            propeller_specific_power_values.append(propeller_geometry)
+            mission_velocity_specific_power_values.append(propeller_specific_power_values)
+            print("done")
+        productivty_mission_profiles[s][q][3].append(mission_velocity_specific_power_values)
 
 if plot_sample_analytical_power_curve:
     cruise_velocity_list = []
