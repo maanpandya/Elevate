@@ -7,7 +7,7 @@ import pickle
 start_time = time.time()
 
 # Global Inputs
-g=9.81
+g=9.80065
 rho = 1.225
 dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
@@ -88,8 +88,8 @@ def design(D, T_hv, V):
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
-    print(c)
-    print(beta)
+    #print(c)
+    #print(beta)
     return r, c, beta, phi, Re, omega, P
 
 def powers(D, T_hv, lst):
@@ -167,9 +167,9 @@ def powers(D, T_hv, lst):
             C_T_prime[-1] = C_T_prime[-2]
             C_P_prime[-1] = C_P_prime[-2]
 
-            plt.plot(xi, C_l)
-            plt.title(f'baseline, omega={omega}')
-            plt.show()
+            #plt.plot(xi, C_l)
+            #plt.title(f'baseline, omega={omega}')
+            #plt.show()
 
             C_T = np.trapz(C_T_prime, x=xi)
             C_P = np.trapz(C_P_prime, x=xi)
@@ -238,7 +238,7 @@ def powers(D, T_hv, lst):
                 C_P_prime[-1] = C_P_prime[-2]
                 H_prime=0.5*rho*W**2*B*c*C_x
 
-                plt.plot(xi, a_prime)
+                #plt.plot(xi, a_prime)
 
 
                 C_T=np.trapz(C_T_prime, x=xi)
@@ -252,13 +252,13 @@ def powers(D, T_hv, lst):
 
                 #plt.plot(xi, phi)
 
-            plt.title(f'psi={psi}')
-            plt.show()
+            #plt.title(f'psi={psi}')
+            #plt.show()
             #print(C_P_prime)
             #print(f'P: {P}')
             #print(f'T: {T}')
             #print(f'blade_drag: {blade_drag}')
-            print()
+            #print()
             #plt.title(f'omega={omega}, psi={psi}')
             #plt.show()
             #print(P)
@@ -269,7 +269,7 @@ def powers(D, T_hv, lst):
 
     return powers
 
-print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
+#print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
 
 #print(design(3, 1100, 3.47))
 

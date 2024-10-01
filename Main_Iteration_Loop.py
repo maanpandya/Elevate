@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from propeller_diameter import diamgenerator
 from productivity_mission_profile import generate_data
+from propeller import powers
 
 #----------------------------------------------------------------------------#
 #             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
@@ -38,7 +39,7 @@ propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 
 plot_sample_productivity_mission_profile = False
-plot_sample_power_curve = True
+plot_sample_analytical_power_curve = False
 
 #----------------------------------------------------------------------------#
 #                      CLASS I WEIGHT ESTIMATION                             #
@@ -59,6 +60,7 @@ for i in range(13):
     for j in range(4):
         payload_mass.append(payload_masses[0] + (payload_masses[1] * i) + (payload_masses[2] * j))
         identifier = "Payload: Alex, " + str(j) + " sandbags and " + str(i) + " rebars."
+        payload_mass_identifier.append(identifier)
 payload_mass = np.array(payload_mass) #kg (Contains all possible payload combinations)
 
 ##############################################################################
@@ -68,10 +70,8 @@ payload_mass = np.array(payload_mass) #kg (Contains all possible payload combina
 ##############################################################################
 
 #--------------------Class I Weight Estimation Result------------------------#
-
 class_I_operational_empty_mass = payload_mass*slope + intercept #kg
 class_I_maximum_take_off_mass = class_I_operational_empty_mass + payload_mass #kg
-#print(class_I_maximum_take_off_mass)
 maximum_thrust_to_weight = 2.0 #Design choice, for maneuvering conditions (could be 1.5)
 maximum_maneuvering_total_thrust = class_I_maximum_take_off_mass * g * maximum_thrust_to_weight #N
 maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
@@ -91,7 +91,7 @@ statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
 statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
 statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
 propeller_diameter_min = 2.0 * np.sqrt(statistical_single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
-blade_tip_mach_number = 0.7 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
+blade_tip_mach_number = 0.6 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
 blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
 
 #The propeller diameter ranges are added in the coming loop
@@ -216,8 +216,13 @@ if plot_sample_productivity_mission_profile:
 
 #--------------Rotor Geometry Design and Power Estimation--------------------#
 
-#Obtained from Tamas's code
-
+for s in range(len(productivty_mission_profiles)): #Loop over each payload combination
+    for q in range(len(productivty_mission_profiles[s])) #Loop over each mission profile for 1 payload type
+        mission_velocity_specific_power_values = []
+        for r in range(len(productivty_mission_profiles[s][q][3][0])): #Loop over each rotor size for 1 mission profile and payload type
+            propeller_specific_power_values = [productivty_mission_profiles[s][q][3][0][r]] #List contains the propeller size and corresponding loaded and unloaded power values
+            for t in range(2): #Loop through 1 loaded and 1 unloaded flight
+                print("t")
 
 
 
@@ -237,19 +242,39 @@ cruise_blade_profile_drag_correction_factor = 4.65 ##Literature (basic helicopte
 airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
 for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
+    #print(n)
+    #print("Payload " + str(payload_mass[n]) + " MTOW " + str(class_I_maximum_take_off_mass[n]))
     for j in range(len(productivty_mission_profiles[n])): #Loop over each mission profile for 1 payload type
         mission_velocity_specific_power_values = []
+        #print(j)
+        #print("Cruise velocity " + str(productivty_mission_profiles[n][j][2]))
         for l in range(len(productivty_mission_profiles[n][j][3][0])): #Loop over each rotor size for 1 mission profile and payload type
             propeller_specific_power_values = [productivty_mission_profiles[n][j][3][0][l]] #List contains the propeller size and corresponding loaded and unloaded power values
+            #print(l)
+            #print("Propeller size " + str(productivty_mission_profiles[n][j][3][0][l]))
             for g in range(2): #Loop through 1 loaded and 1 unloaded flight
-                power_values = []
+                #print(g)
+                
 
+                #print("single rotor area")
+                #print(productivty_mission_profiles[n][j][3][0][l])
+                #print("total rotor area")
+                #print(productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
+                #print("blade tip velocity")
+                #print(blade_tip_velocity, blade_tip_velocity**3)
                 #Hover Power 
-                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
+                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity) / number_of_propellers
                 induced_hover_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
                 profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8.0
                 hover_power = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity * blade_tip_velocity * blade_tip_velocity #W
-                power_values.append(hover_power)
+                
+                #print("Hover")
+                #print(hover_thrust_coefficient)
+                #print(induced_hover_power_coefficient)
+                #print(profile_power_coefficient)
+                #print(hover_power)
+                
+               
 
                 #Climb and descent power
                 thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(productivty_mission_profiles[n][j][g][7] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)) #m/s
@@ -261,35 +286,65 @@ for n in range(len(productivty_mission_profiles)): #Loop over each payload combi
                 #else:
                 #    descent_power = hover_power #W
 
-                power_values.append(climb_power)
-                power_values.append(descent_power)
+                #print("Climb and descent")
+                #print(thrust_equivalent_vertical_flight_induced_velocity)
+                #print(climb_power)
+                #print(descent_power)
 
+                
                 #Cruise power
-                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
+                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity) / number_of_propellers
                 cruise_induced_velocity = np.sqrt(-0.5 * productivty_mission_profiles[n][j][2] * productivty_mission_profiles[n][j][2] + 0.5 * np.sqrt(productivty_mission_profiles[n][j][2]**4 + 4.0 * (productivty_mission_profiles[n][j][g][10] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers))**2)) #m/s
                 cruise_induced_velocity_inflow_factor = cruise_induced_velocity / blade_tip_velocity
                 cruise_advance_ratio = productivty_mission_profiles[n][j][2] / blade_tip_velocity
                 induced_cruise_power_coefficient = cruise_correction_factor * cruise_thrust_coefficient * cruise_induced_velocity_inflow_factor
                 cruise_profile_power_coefficient = 0.125 * rotor_solidity * blade_profile_drag_coefficient * (1 + cruise_blade_profile_drag_correction_factor * cruise_advance_ratio * cruise_advance_ratio)
                 cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
+                cruise_induced_power = induced_cruise_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
+                cruise_profile_power = cruise_profile_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
+                cruise_parasitic_power = cruise_parasitic_drag_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
                 cruise_power = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
-                power_values.append(cruise_power)
+                average_cruise_powers = [np.mean(cruise_power), np.mean(cruise_induced_power), np.mean(cruise_profile_power), np.mean(cruise_parasitic_power)]
                 
+
+                #print("Cruise")
+                #print(cruise_thrust_coefficient)
+                #print(cruise_induced_velocity)
+                #print(cruise_induced_velocity_inflow_factor)
+                #print(cruise_advance_ratio)
+                #print(induced_cruise_power_coefficient)
+                #print(cruise_profile_power_coefficient)
+                #print(cruise_parasitic_drag_power_coefficient)
+                #print(cruise_power)
+                
+                #print("END OF ANALYSIS FOR ONE CONFIGURATION")
+                power_values = [hover_power, climb_power, descent_power, cruise_power, average_cruise_powers]
                 propeller_specific_power_values.append(power_values)
+                
             mission_velocity_specific_power_values.append(propeller_specific_power_values)
         productivty_mission_profiles[n][j][3].append(mission_velocity_specific_power_values)
 
-if plot_sample_power_curve:
+if plot_sample_analytical_power_curve:
     cruise_velocity_list = []
     cruise_power_list = []
+    cruise_induced_power_list = []
+    cruise_profile_power_list = []
+    cruise_parasitic_power_list = []
     for y in range(len(productivty_mission_profiles[0])):
         cruise_velocity_list.append(productivty_mission_profiles[0][y][2])
-        cruise_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][3]))
+        cruise_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][0]))
+        cruise_induced_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][1]))
+        cruise_profile_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][2]))
+        cruise_parasitic_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][3]))
 
-    plt.plot(cruise_velocity_list, cruise_power_list)
+    plt.plot(cruise_velocity_list, cruise_power_list, label="Total cruise power")
+    plt.plot(cruise_velocity_list, cruise_induced_power_list, label="Induced cruise power")
+    plt.plot(cruise_velocity_list, cruise_profile_power_list, label="Profile cruise power")
+    plt.plot(cruise_velocity_list, cruise_parasitic_power_list, label="Parasitic cruise power")
     plt.title("Sample Cruise Power Plot with Varying Cruise Velocity")
     plt.xlabel("Cruise Velocity (m/s)")
     plt.ylabel("Cruise Power (W)")
+    plt.legend()
     plt.show()
 
 
