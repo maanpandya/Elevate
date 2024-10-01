@@ -38,7 +38,7 @@ propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 
 plot_sample_productivity_mission_profile = False
-
+plot_sample_power_curve = True
 
 #----------------------------------------------------------------------------#
 #                      CLASS I WEIGHT ESTIMATION                             #
@@ -71,11 +71,30 @@ payload_mass = np.array(payload_mass) #kg (Contains all possible payload combina
 
 class_I_operational_empty_mass = payload_mass*slope + intercept #kg
 class_I_maximum_take_off_mass = class_I_operational_empty_mass + payload_mass #kg
+#print(class_I_maximum_take_off_mass)
 maximum_thrust_to_weight = 2.0 #Design choice, for maneuvering conditions (could be 1.5)
 maximum_maneuvering_total_thrust = class_I_maximum_take_off_mass * g * maximum_thrust_to_weight #N
 maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
 loaded_cruise_total_thrust = class_I_maximum_take_off_mass * g #N (Vertical thrust component for L=W)
 unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical thrust component for L=W)
+
+#-------------------------Rotor Sizing----------------------------#
+
+#First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
+propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
+propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
+total_propeller_area_max = propeller_area_max * number_of_propellers #m^2
+disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area_max #kg/m^2
+
+#Estimate rotor size according to statistics, assuming it gives smaller size than from the geometrical limitations
+statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
+statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
+statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
+propeller_diameter_min = 2.0 * np.sqrt(statistical_single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
+blade_tip_mach_number = 0.7 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
+blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
+
+#The propeller diameter ranges are added in the coming loop
 
 #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
@@ -85,8 +104,8 @@ max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate mo
 mission_distance = 3000.0 #m
 
 productivty_mission_profiles = [] #Contains the profile of the productivity mission for the different payload options
-#It contains as many profiles as payload options, for each you have the mission profile corresponding to a certain cruise velocity and
-#inside this components you have the loaded and unloaded mission profile together with the corresponding cruise velocity.
+#It contains as many profiles as payload options, for each you have the mission profile for loaded and unloaded conditions, the cruise
+#velocity and the propeller data. The propeller data has the propeller diameter, area and angular velocity ranges.
 
 #Loop through each payload option and all cruise velocity options 
 for h in range(len(payload_mass)):
@@ -117,8 +136,13 @@ for h in range(len(payload_mass)):
 
         unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
 
+        #Propeller diameter range generation with previous sizing
+        propeller_diameter = np.linspace(propeller_diameter_min[h], propeller_diameter_max, 50) #m
+        propeller_area = np.pi * (propeller_diameter / 2.0) * (propeller_diameter / 2.0) #m^2  
+        propeller_angular_velocity = blade_tip_velocity / (propeller_diameter / 2.0) #rad/s
+        propeller_data = [propeller_diameter, propeller_area, propeller_angular_velocity]
 
-        velocity_specific_productivty_mission_profile = [loaded_mission_profile, unloaded_mission_profile, cruise_velocity[k]]
+        velocity_specific_productivty_mission_profile = [loaded_mission_profile, unloaded_mission_profile, cruise_velocity[k], propeller_data]
         payload_specific_productivity_mission_profile.append(velocity_specific_productivty_mission_profile)
 
     productivty_mission_profiles.append(payload_specific_productivity_mission_profile)
@@ -186,28 +210,6 @@ if plot_sample_productivity_mission_profile:
 
     plt.show()
 
-#-------------------------Rotor Sizing----------------------------#
-
-#First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
-propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
-propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
-total_propeller_area_max = propeller_area_max * number_of_propellers #m^2
-disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area_max #kg/m^2
-
-#Estimate rotor size according to statistics, assuming it gives smaller size than from the geometrical limitations
-statistical_disk_loading = 98.0 #kg/m^2 (disk loading source)
-statistical_total_propeller_area = (maximum_maneuvering_total_thrust / g) / statistical_disk_loading #m^2
-statistical_single_propeller_area = statistical_total_propeller_area / number_of_propellers #m^2 
-propeller_diameter_min = 2.0 * np.sqrt(statistical_single_propeller_area / np.pi) #m (minimum propeller diameter from statistics)
-
-#Set a range of rotor sizes to try from the statistical minimum to the geometrical maximum
-propeller_diameter = np.linspace(propeller_diameter_min, propeller_diameter_max, 50) #m
-propeller_area = np.pi * (propeller_diameter / 2.0) * (propeller_diameter / 2.0) #m^2  
-blade_tip_mach_number = 0.7 #Should stay below 0.8 for drag divergence and possibly below 0.6 for noise
-blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
-propeller_angular_velocity = blade_tip_velocity / (propeller_diameter / 2.0) #rad/s
-
-
 #----------------------------------------------------------------------------#
 #                        CLASS II WEIGHT ESTIMATION                          #
 #----------------------------------------------------------------------------#
@@ -237,158 +239,173 @@ airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area 
 for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
     for j in range(len(productivty_mission_profiles[n])): #Loop over each mission profile for 1 payload type
         mission_velocity_specific_power_values = []
-        for l in range(len(propeller_diameter)): #Loop over each rotor size for 1 mission profile and payload type
-            propeller_specific_power_values = [propeller_diameter[l]] #List contains the propeller size and corresponding loaded and unloaded power values
+        for l in range(len(productivty_mission_profiles[n][j][3][0])): #Loop over each rotor size for 1 mission profile and payload type
+            propeller_specific_power_values = [productivty_mission_profiles[n][j][3][0][l]] #List contains the propeller size and corresponding loaded and unloaded power values
             for g in range(2): #Loop through 1 loaded and 1 unloaded flight
                 power_values = []
 
                 #Hover Power 
-               
-                print(propeller_diameter[0])
-               
-                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
+                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
                 induced_hover_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
                 profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8.0
-                hover_power = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * propeller_area[l] * number_of_propellers * blade_tip_velocity * blade_tip_velocity * blade_tip_velocity #W
+                hover_power = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity * blade_tip_velocity * blade_tip_velocity #W
                 power_values.append(hover_power)
 
                 #Climb and descent power
-                thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(productivty_mission_profiles[n][j][g][7] / (2.0 * air_density * propeller_area[l] * number_of_propellers)) #m/s
+                thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(productivty_mission_profiles[n][j][g][7] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)) #m/s
                 climb_power = hover_power * ((vertical_climb_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_climb_speed / (2 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1)) #W
-                if abs(vertical_descent_speed) >= (2.0 * thrust_equivalent_vertical_flight_induced_velocity):
-                    descent_power = hover_power * ((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1.0)) #W
-                else:
-                    descent_power = hover_power #W
+                descent_power = hover_power #W
+
+                #if abs(vertical_descent_speed) >= (2.0 * thrust_equivalent_vertical_flight_induced_velocity):
+                #    descent_power = hover_power * ((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_descent_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1.0)) #W
+                #else:
+                #    descent_power = hover_power #W
+
                 power_values.append(climb_power)
                 power_values.append(descent_power)
 
                 #Cruise power
-                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * propeller_area[l] * blade_tip_velocity * blade_tip_velocity)
-                cruise_induced_velocity = np.sqrt(-0.5 * productivty_mission_profiles[n][j][2] * productivty_mission_profiles[n][j][2] + 0.5 * np.sqrt(productivty_mission_profiles[n][j][2]**4 + 4.0 * (productivty_mission_profiles[n][j][g][10] / (2.0 * air_density * propeller_area[l] * number_of_propellers))**2)) #m/s
+                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
+                cruise_induced_velocity = np.sqrt(-0.5 * productivty_mission_profiles[n][j][2] * productivty_mission_profiles[n][j][2] + 0.5 * np.sqrt(productivty_mission_profiles[n][j][2]**4 + 4.0 * (productivty_mission_profiles[n][j][g][10] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers))**2)) #m/s
                 cruise_induced_velocity_inflow_factor = cruise_induced_velocity / blade_tip_velocity
                 cruise_advance_ratio = productivty_mission_profiles[n][j][2] / blade_tip_velocity
                 induced_cruise_power_coefficient = cruise_correction_factor * cruise_thrust_coefficient * cruise_induced_velocity_inflow_factor
                 cruise_profile_power_coefficient = 0.125 * rotor_solidity * blade_profile_drag_coefficient * (1 + cruise_blade_profile_drag_correction_factor * cruise_advance_ratio * cruise_advance_ratio)
-                cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (propeller_area[l] * number_of_propellers)
-                cruise_power = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * propeller_area[l] * number_of_propellers * blade_tip_velocity**3 #W
+                cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
+                cruise_power = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
                 power_values.append(cruise_power)
                 
                 propeller_specific_power_values.append(power_values)
             mission_velocity_specific_power_values.append(propeller_specific_power_values)
-        productivty_mission_profiles[n][j].append(mission_velocity_specific_power_values)
+        productivty_mission_profiles[n][j][3].append(mission_velocity_specific_power_values)
+
+if plot_sample_power_curve:
+    cruise_velocity_list = []
+    cruise_power_list = []
+    for y in range(len(productivty_mission_profiles[0])):
+        cruise_velocity_list.append(productivty_mission_profiles[0][y][2])
+        cruise_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][3]))
+
+    plt.plot(cruise_velocity_list, cruise_power_list)
+    plt.title("Sample Cruise Power Plot with Varying Cruise Velocity")
+    plt.xlabel("Cruise Velocity (m/s)")
+    plt.ylabel("Cruise Power (W)")
+    plt.show()
 
 
 #-------------------Productivity Mission Modelling-----------------------#
 
-
 # Mission starts with unloaded flight, then loaded and repeating this pattern until 90 minutes runs out, trying to get as close as possible.
 # The mission is defined as the sum of all runs and one run can be any defined number of flights
 # Each run is flown with a new battery pack
+
 cruise_distance = mission_distance  # m (Mission requirement, single flight distance)
 cruise_height = cruise_height  # m (Design choice, might be modified due to regulations)
 loiter_hover_time = 40.0  # s (both at start and end of the entire mission, could be modified due to regulations)
-climb_time = cruise_height / vertical_climb_speed  # s (Time to climb to the required altitude, descent time is the same)
-cruise_time = cruise_distance / cruise_speed  # s (Time to cover the single flight distance)
 ground_turnover_time = 120.0 # s (assumed for payload operations, added every loaded flight)
 battery_turnover_time = 60.0  # s (assumed for battery replacement, added every run (1 loaded and 1 unloaded flight))
-mission_time = 0.0  #s
-mission_time = mission_time + loiter_hover_time  # Add loiter time since it is always there
-mission_climb_time = 0.0 #s (Accumulates all the time used for climbing in the mission)
-mission_descent_time = 0.0 #s (Accumulates all the time used for descending in the mission)
-mission_cruise_time = 0.0 #s (Accumulates all the time used for cruising in the mission)
-flight_type_identifier = 0  #Odd values identify unloaded and even identify loaded flights since we start unloaded
-flight_number_identifier_previous = 0 #Used to count how many flights have been flown to identify when the battery must be changed
-flight_number_identifier_new = 0 #Used to count how many flights have been flown to identify when the battery must be changed
-single_charge_flight_number = 2 #Determines per how many flights we want to change the battery, if it is 2 then every 2 flights it is changed and it if is 3 then every 3
-loaded_flight_counter = 0 #Stores the amount of loaded flights
-battery_change_times = 0 #Stores the amount of battery changes
-
 
 #Function to add the corresponding time taken to complete either a loaded or unloaded flight
-def add_flight_type_specific_time(flight_type_identifier, mission_time, climb_time, cruise_time, ground_turnover_time):
+def add_flight_type_specific_time(flight_type_identifier, mission_time, loaded_climb_time, loaded_cruise_time, unloaded_climb_time, unloaded_cruise_time, ground_turnover_time):
 
     global loaded_flight_counter
 
     if flight_type_identifier % 2 == 0:  # Even identifier means loaded flight
 
-        mission_time = mission_time + (cruise_time + (2.0 * climb_time) + ground_turnover_time) #Add time values for loaded flight
+        mission_time = mission_time + (loaded_cruise_time + (2.0 * loaded_climb_time) + ground_turnover_time) #Add time values for loaded flight
         loaded_flight_counter = loaded_flight_counter + 1
 
     else:  # Odd identifier means unloaded flight
 
-        mission_time = mission_time + (cruise_time + (2.0 * climb_time)) #Add time values for unloaded flight
+        mission_time = mission_time + (unloaded_cruise_time + (2.0 * unloaded_climb_time)) #Add time values for unloaded flight
 
     return mission_time
 
-#Mission loop
-while mission_time < (90 * 60):  #Mission requirement
+for p in range(len(productivty_mission_profiles)): #Loop through all payload combinations
+    for t in range(len(productivty_mission_profiles[p])): #Loop through all cruise velocities for 1 payload combination
+        for k in range(len(productivty_mission_profiles[p][t][3][0])): #Loop through all propeller sizes for 1 payload and 1 cruise velocity combination
 
-    flight_type_identifier = flight_type_identifier + 1
-    flight_number_identifier_new = flight_number_identifier_new + 1
+            mission_time = 0.0  #s
+            mission_time = mission_time + loiter_hover_time  # Add loiter time since it is always there
+            flight_type_identifier = 0  #Odd values identify unloaded and even identify loaded flights since we start unloaded
+            flight_number_identifier_previous = 0 #Used to count how many flights have been flown to identify when the battery must be changed
+            flight_number_identifier_new = 0 #Used to count how many flights have been flown to identify when the battery must be changed
+            single_charge_flight_number = 2 #Determines per how many flights we want to change the battery, if it is 2 then every 2 flights it is changed and it if is 3 then every 3
+            loaded_flight_counter = 0 #Stores the amount of loaded flights
+            battery_change_times = 0 #Stores the amount of battery changes
 
-    if (flight_number_identifier_new - flight_number_identifier_previous) == single_charge_flight_number:  # Means that enough flights have been flown to change the battery in this loop
+            loaded_climb_time = np.sum(productivty_mission_profiles[p][t][0][0][:len(productivty_mission_profiles[p][t][0][7])]) #s
+            unloaded_climb_time = np.sum(productivty_mission_profiles[p][t][1][0][:len(productivty_mission_profiles[p][t][1][7])]) #s
+            loaded_cruise_time = np.sum(productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][0][7]):len(productivty_mission_profiles[p][t][0][7])+len(productivty_mission_profiles[p][t][0][10])]) #s
+            unloaded_cruise_time = np.sum(productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][1][7]):len(productivty_mission_profiles[p][t][1][7])+len(productivty_mission_profiles[p][t][1][10])]) #s
 
-        battery_change_times = battery_change_times + 1
-        flight_number_identifier_previous = flight_number_identifier_previous + single_charge_flight_number  # Updates the counter so that after the next batch of flights the difference is correct to enable the battery change
-        temporary_mission_time = add_flight_type_specific_time(flight_type_identifier, mission_time, climb_time, cruise_time, ground_turnover_time) + battery_turnover_time  # Before 90 min check
+            #Mission loop
+            while mission_time < (90 * 60):  #Mission requirement
 
-        if temporary_mission_time < (90 * 60):  # Maximum mission time requirement is not exceeded with latest run hence mission time is updated
+                flight_type_identifier = flight_type_identifier + 1
+                flight_number_identifier_new = flight_number_identifier_new + 1
 
-            mission_time = temporary_mission_time
+                if (flight_number_identifier_new - flight_number_identifier_previous) == single_charge_flight_number:  # Means that enough flights have been flown to change the battery in this loop
 
-        else:  # Maximum mission time requirement is exceeded with latest run but if it is the last flight then we could make it still if we do remove the battery turnover time since it is the last flight
+                    battery_change_times = battery_change_times + 1
+                    flight_number_identifier_previous = flight_number_identifier_previous + single_charge_flight_number  # Updates the counter so that after the next batch of flights the difference is correct to enable the battery change
+                    temporary_mission_time = add_flight_type_specific_time(flight_type_identifier, mission_time, loaded_climb_time, loaded_cruise_time, unloaded_climb_time, unloaded_cruise_time, ground_turnover_time) + battery_turnover_time  # Before 90 min check
 
-            if (temporary_mission_time - battery_turnover_time) < (90 * 60):  # Check if we exceed mission requirement by removing last battery time change since it is useless, if so then break the loop since another flight is not possible anyway
-                battery_change_times = battery_change_times - 1
-                mission_time = temporary_mission_time - battery_turnover_time
-                last_flight_battery_state = "on the replacement flight."
-                break
+                    if temporary_mission_time < (90 * 60):  # Maximum mission time requirement is not exceeded with latest run hence mission time is updated
 
-            else:  # We exceed even without replacing the last battery, hence the last run cannot fit, do not update mission time
-                last_flight_battery_state = "on its last flight before replacement."
-                break
+                        mission_time = temporary_mission_time
 
-    else:  # Not needed to change the battery yet in this loop
+                    else:  # Maximum mission time requirement is exceeded with latest run but if it is the last flight then we could make it still if we do remove the battery turnover time since it is the last flight
 
-        temporary_mission_time = add_flight_type_specific_time(flight_type_identifier, mission_time, climb_time, cruise_time, ground_turnover_time)  # Before 90 min check
+                        if (temporary_mission_time - battery_turnover_time) < (90 * 60):  # Check if we exceed mission requirement by removing last battery time change since it is useless, if so then break the loop since another flight is not possible anyway
+                            battery_change_times = battery_change_times - 1
+                            mission_time = temporary_mission_time - battery_turnover_time
+                            last_flight_battery_state = "on the replacement flight."
+                            break
 
-        if temporary_mission_time < (90 * 60):  # Maximum mission time requirement is not exceeded with latest run hence mission time is updated
+                        else:  # We exceed even without replacing the last battery, hence the last run cannot fit, do not update mission time
+                            last_flight_battery_state = "on its last flight before replacement."
+                            break
 
-            mission_time = temporary_mission_time
+                else:  # Not needed to change the battery yet in this loop
 
-        else:  # Maximum mission time requirement is exceeded with latest run hence mission time is not updated and loop broken
-            last_flight_battery_state = "on an intermediate flight."
-            break
+                    temporary_mission_time = add_flight_type_specific_time(flight_type_identifier, mission_time, loaded_climb_time, loaded_cruise_time, unloaded_climb_time, unloaded_cruise_time, ground_turnover_time)  # Before 90 min check
 
-    mission_climb_time = mission_climb_time + climb_time
-    mission_descent_time = mission_descent_time + climb_time
-    mission_cruise_time = mission_cruise_time + cruise_time
+                    if temporary_mission_time < (90 * 60):  # Maximum mission time requirement is not exceeded with latest run hence mission time is updated
 
-if (flight_type_identifier - 1) % 2 == 0:
-    last_flight_type = "loaded"
+                        mission_time = temporary_mission_time
 
-else:
-    last_flight_type = "unloaded"
+                    else:  # Maximum mission time requirement is exceeded with latest run hence mission time is not updated and loop broken
+                        last_flight_battery_state = "on an intermediate flight."
+                        break
 
-print("#----Productivity Mission Summary----#\n")
-print("The total mission time is " + str(round(mission_time / 60.0, 2)) + " min, the last flight was " + last_flight_type + " and the battery was " + last_flight_battery_state)
-print("A total of " + str(mission_climb_time) + "s is spent climbing or " + str(round((mission_climb_time / mission_time) * 100, 2)) + "% of the total mission")
-print("A total of " + str(mission_descent_time) + "s is spent descending or " + str(round((mission_descent_time / mission_time) * 100, 2)) + "% of the total mission")
-print("A total of " + str(mission_cruise_time) + "s is spent cruising or " + str(round((mission_cruise_time / mission_time) * 100, 2)) + "% of the total mission")
-print("In total " + str(flight_type_identifier - 1) + " flights are flown, with " + str(loaded_flight_counter) + " of those being loaded. A total of " + str(loaded_flight_counter * payload_mass) + " kg of payload is transported overall.")
-print("Finally, " + str(battery_change_times) + " battery packs are needed.")
+            if (flight_type_identifier - 1) % 2 == 0:
+                last_flight_type = "loaded"
 
-total_mission_hover_energy = hover_power_values * loiter_hover_time #J
-total_mission_climb_energy = vertical_climb_power_values * mission_climb_time #J
-total_mission_descent_energy = vertical_descent_speed * mission_descent_time #J
-total_mission_cruise_energy = cruise_power_values * mission_cruise_time #J
+            else:
+                last_flight_type = "unloaded"
 
-#These are the energy values actually contained in the battery, since it is changed per as many runs as previously defined
-run_hover_energy = hover_power_values * loiter_hover_time #J
-run_climb_energy = vertical_climb_power_values * (climb_time * single_charge_flight_number) #J
-run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_charge_flight_number) #J
-run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
-total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
+            total_flight_number = flight_type_identifier - 1
+            loaded_flight_number = loaded_flight_counter
+            unloaded_flight_number = total_flight_number - loaded_flight_number
+            mission_climb_time = loaded_flight_number * loaded_climb_time + unloaded_flight_number * unloaded_climb_time #s
+            mission_cruise_time = loaded_flight_number * loaded_cruise_time + unloaded_flight_number * unloaded_cruise_time #s
+            battery_pack_number = battery_change_times
+
+            #print("#----Productivity Mission Summary----#\n")
+            #print("The total mission time is " + str(round(mission_time / 60.0, 2)) + " min, the last flight was " + last_flight_type + " and the battery was " + last_flight_battery_state)
+            #print("A total of " + str(mission_climb_time) + "s is spent climbing or " + str(round((mission_climb_time / mission_time) * 100, 2)) + "% of the total mission")
+            #print("A total of " + str(mission_descent_time) + "s is spent descending or " + str(round((mission_descent_time / mission_time) * 100, 2)) + "% of the total mission")
+            #print("A total of " + str(mission_cruise_time) + "s is spent cruising or " + str(round((mission_cruise_time / mission_time) * 100, 2)) + "% of the total mission")
+            #print("In total " + str(flight_type_identifier - 1) + " flights are flown, with " + str(loaded_flight_counter) + " of those being loaded. A total of " + str(loaded_flight_counter * payload_mass) + " kg of payload is transported overall.")
+            #print("Finally, " + str(battery_change_times) + " battery packs are needed.")
+
+            #These are the energy values actually contained in the battery, since it is changed per as many runs as previously defined
+            run_hover_energy = hover_power_values * loiter_hover_time #J
+            run_climb_energy = vertical_climb_power_values * (climb_time * single_charge_flight_number) #J
+            run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_charge_flight_number) #J
+            run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
+            total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
 
 #-------------------Component Weight Estimation-----------------------#
 
