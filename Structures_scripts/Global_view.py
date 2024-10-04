@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.integrate import cumulative_trapezoid
 
 ''' Assumptions (yes, there are loads):
 - beam only connects to pin via 2 bearings
@@ -12,20 +13,23 @@ import matplotlib.pyplot as plt
 '''
 
 # Define variables
-beam_width = 0.2  # [m]
-lug_thickness = 0.05  # [m]
-bearing_thickness = 0.03  # [m]
-beam_length = 2  # [m]
+beam_width = 0.073  # [m]
+lug_thickness = 0.01  # [m]
+depth_of_contact = 0.005  # [m]
+beam_length = 1.8  # [m]
 thrust = 600  # [N]
-diameter_pin = 0.0224  # [m]
+diameter_pin = 0.023  # [m]
 bolt_head_height = 0.01  # [m]
 nut_height = 0.01  # [m]
 E_mod = 73.1 *10**9 # [Pa]
-shear_strength = 235 * 10**6  # [Pa]
+shear_strength = 190 * 10**6  # [Pa]
 yield_strength = 345 * 10**6  # [Pa]
 safety_factor = 2 # [-]
 center_lug_hole = 0.04 # [m]
 thread_height = 0.03 # [m]
+
+
+bearing_thickness = 2*depth_of_contact  # [m]
 
 # This will determine the thread engagement ratio: length of thread engagement=thread_engagement_ratio*diameter_thread
 
@@ -76,9 +80,11 @@ def calculate_bolt_parameters(thrust, safety_factor, beam_length, beam_width, lu
     # Integrate shear force to get bending moment
     y_moment = np.zeros_like(x)
 
+
     # Numerical integration of shear force to get bending moment
-    for i in range(1, len(x)):
-        y_moment[i] = y_moment[i - 1] + (y_shear[i - 1] + y_shear[i]) / 2 * (x[i] - x[i - 1])
+    # for i in range(1, len(x)):
+    #     y_moment[i] = y_moment[i - 1] + (y_shear[i - 1] + y_shear[i]) / 2 * (x[i] - x[i - 1])
+    y_moment = cumulative_trapezoid(y_shear, x, initial=0)
 
     # Plotting the bending moment diagram
     plt.figure()
