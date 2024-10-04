@@ -544,23 +544,36 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
 
 #-------------------Component Weight Estimation-----------------------#
 
-#Battery sizing
+#Battery sizing constants
 minimum_battery_state_of_charge = 0.2 #20% of the battery charge is preserved to improve the longevity of the battery and can be used as an emergence energy reserve as well
 battery_efficiency = 0.92
 battery_energy_density = 270.0 * 3600.0 #J/kg (could range between 170-350 Wh/kg, 3600 is conversion factor from Wh to J)
-battery_mass = 1.05 * (total_run_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for aviones and other sytems consumption)
-total_battery_packs_mass = battery_mass * battery_change_times #kg (Total mass of all battery packs needed)
 
-#Original Excel Weight Formulas
+#Fuselage parameters
 fuselage_length = 2.0 #m (Assumed)
 fuselage_height = 0.7 #m (Assumed)
 fuselage_width = 0.7 #m (Assumed)
 fuselage_perimiter = (fuselage_width * 2.0) + (fuselage_length * 2.0) #m
 number_of_passengers = 1.0 #Alex
 
-total_fuselage_mass_1 = 14.86 * (class_one_maximum_take_off_mass**(0.144)) * ((fuselage_length**(0.778))/(fuselage_perimiter)) * (fuselage_length**(0.383)) * (number_of_passengers**(0.455)) #kg 
-propeller_blades_mass_1 = (0.144 * ((propeller_diameter * vertical_climb_power_values[0] * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
-propeller_motor_mass_1 = ((0.165 * vertical_climb_power_values[0])  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
+for i in range(len(productivty_mission_profiles)): #Loop through all payload combinations
+    for j in range(len(productivty_mission_profiles[i])): #Loop through all cruise velocities for 1 payload combination
+        for k in range(len(productivty_mission_profiles[i][j][3][0])): #Loop through all propeller sizes for 1 payload and 1 cruise velocity combination
+            propeller_specific_mass_group = []
+            for l in range(5): #Loop through all battery change rates
+                
+                #Battery sizing
+                numerical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][11]
+                analytical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][12]
+                numerical_battery_mass = 1.05 * (numerical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
+                analytical_battery_mass = 1.05 * (analytical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
+                total_numerical_battery_packs_mass = numerical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
+                total_analytical_battery_packs_mass = analytical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
+
+                #Original Excel Weight Formulas
+                total_fuselage_mass_1 = 14.86 * (class_one_maximum_take_off_mass**(0.144)) * ((fuselage_length**(0.778))/(fuselage_perimiter)) * (fuselage_length**(0.383)) * (number_of_passengers**(0.455)) #kg 
+                propeller_blades_mass_1 = (0.144 * ((propeller_diameter * vertical_climb_power_values[0] * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
+                propeller_motor_mass_1 = ((0.165 * vertical_climb_power_values[0])  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
 
 #Rohit's Class II Weight Estimation (1-6)
 
