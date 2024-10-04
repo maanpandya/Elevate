@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 '''
 
 # Define variables
-beam_width = 0.2  # [m]
-lug_thickness = 0.05  # [m]
-bearing_thickness = 0.03  # [m]
-beam_length = 2  # [m]
+beam_width = 0.073  # [m]
+lug_thickness = 0.01  # [m]
+bearing_thickness = 0.01  # [m]
+beam_length = 1.8  # [m]
 thrust = 600  # [N]
-diameter_pin = 0.0224  # [m]
+diameter_pin = 0.023  # [m]
 bolt_head_height = 0.01  # [m]
 nut_height = 0.01  # [m]
 E_mod = 73.1 *10**9 # [Pa]
