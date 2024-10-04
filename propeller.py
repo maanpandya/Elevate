@@ -7,18 +7,18 @@ import pickle
 start_time = time.time()
 
 # Global Inputs
+g=9.80065
 rho = 1.225
 dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
 a = 340
 B=2
-foil = 'NACA 4415'
+foil = 'NACA 2421'
 foilpath = foil.replace(" ", "_")
 
-def design(D, T_hv):
+def design(D, T_hv, V):
     #print(T_hv)
     nr_sect = 100
-    V=0.001
     D_hub = 0.3048
     mach_tip = 0.6
     zeta_acc = 0.001
@@ -88,10 +88,15 @@ def design(D, T_hv):
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
+    #print(c)
+    #print(beta)
     return r, c, beta, phi, Re, omega, P
 
 def powers(D, T_hv, lst):
-    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv)
+    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv, 0.001)
+
+    powers = [r, c, beta, P_hv]
+
     #print(P_hv)
     nr_sect=np.size(r)
     R=r[-1]
@@ -103,22 +108,23 @@ def powers(D, T_hv, lst):
     with open('AirfoilData/' + foilpath + '/cd_func.pkl', 'rb') as file:
         cd_func = pickle.load(file)
 
-    powers=[P_hv]
-    for point in lst:
-        T_conv, V, theta = point
-        T=0
-        theta=np.radians(theta)
-        V_n=V*np.sin(theta)
-        V_disc=V*np.cos(theta)
 
+    for point in lst:
+        if len(point)==2:
+            T_conv, V_n = point
+            V_disc=0
+        elif len(point)==3:
+            T_conv, V_n, V_disc = point
+
+        T = 0
         omega=omega_hv
         phi=phi_hv+0.05
         Re = Re_hv
 
-        while np.abs((T_conv-T)/T_conv)>0.005:
-            i_lst = []
-            a_lst = []
-            for i in range(200):
+        while np.abs((T_conv-T)/T_conv)>0.001:
+            a_prev = np.full(1, nr_sect)
+            a = np.zeros(nr_sect)
+            while not np.max(np.abs((a - a_prev) / a_prev)) < 0.0005:
                 f=B/2*(1-xi)/np.sin(np.arctan2(xi*np.tan(phi),1))
                 F=2/np.pi*np.arccos(np.exp(-f))
                 alpha=beta-phi
@@ -130,6 +136,7 @@ def powers(D, T_hv, lst):
                 C_l=cl_func(points)
                 C_d = cd_func(points)
                 epsilon=C_d/C_l
+                #epsilon=np.zeros(nr_sect)
 
                 C_y = C_l*(np.cos(phi) - epsilon*np.sin(phi))
                 C_x = C_l*(np.sin(phi)+epsilon*np.cos(phi))
@@ -137,13 +144,14 @@ def powers(D, T_hv, lst):
                 K = C_y/(4*np.sin(phi)**2)
                 K_prime = C_x/(4*np.sin(phi)*np.cos(phi))
 
+                a_prev=a
                 a = sigma*K/(F-sigma*K)
                 a_prime = sigma*K_prime/(F+sigma*K_prime)
                 a[-1]=a[-2]
                 a_prime[-1]=a_prime[-2]
 
-                i_lst.append(i)
-                a_lst.append(a[0])
+                #i_lst.append(i)
+                #a_lst.append(a[0])
 
                 W=V_n*(1+a)/np.sin(phi)
                 Re=W*c/kin_viscosity
@@ -159,7 +167,7 @@ def powers(D, T_hv, lst):
             C_T_prime[-1] = C_T_prime[-2]
             C_P_prime[-1] = C_P_prime[-2]
 
-            #plt.plot(xi, C_P_prime)
+            #plt.plot(xi, C_l)
             #plt.title(f'baseline, omega={omega}')
             #plt.show()
 
@@ -175,15 +183,16 @@ def powers(D, T_hv, lst):
             n_psi=11
             T=0
             P=0
+            blade_drag=0
             for psi in np.linspace(0, 180, n_psi):
                 psi=np.radians(psi)
                 V_t=V_disc*np.cos(psi)
                 phi=phi_eq
                 Re=Re_eq
 
-                i_lst=[]
-                a_lst=[]
-                for i in range(200):
+                a_prev=np.full(1, nr_sect)
+                a=np.zeros(nr_sect)
+                while not np.max(np.abs((a-a_prev)/a_prev))<0.0005:
                     f = B / 2 * (1 - xi) / np.sin(np.arctan2(xi * np.tan(phi), 1))
                     F = 2 / np.pi * np.arccos(np.exp(-f))
                     alpha = beta - phi
@@ -195,6 +204,7 @@ def powers(D, T_hv, lst):
                     C_l = cl_func(points)
                     C_d = cd_func(points)
                     epsilon = C_d / C_l
+                    #epsilon=np.zeros(nr_sect)
 
                     C_y = C_l * (np.cos(phi) - epsilon * np.sin(phi))
                     C_x = C_l * (np.sin(phi) + epsilon * np.cos(phi))
@@ -202,20 +212,23 @@ def powers(D, T_hv, lst):
                     K = C_y / (4 * np.sin(phi) ** 2)
                     K_prime = C_x / (4 * np.sin(phi) * np.cos(phi))
 
+                    a_prev=a
                     a = sigma * K / (F - sigma * K)
                     a_prime = sigma * K_prime / (F + sigma * K_prime)
                     a[-1] = a[-2]
                     a_prime[-1] = a_prime[-2]
 
-                    i_lst.append(i)
-                    a_lst.append(a[0])
+                    #i_lst.append(i)
+                    #a_lst.append(a[0])
 
                     W = np.sqrt((V_n*(1+a))**2+(omega*r*(1-a_prime)+V_t)**2)
-                    Re = W * c / kin_viscosity
+                    Re = W*c/kin_viscosity
                     Re[-1] = 100000
 
-                    delta_phi = np.arctan2(V_n * (1 + a), omega * r * (1 - a_prime) + V_t) - phi
+                    delta_phi = np.arctan2(V_n * (1 + a), omega * r * (1 - a_prime)+V_t) - phi
                     phi += delta_phi / 200
+                    #print(psi)
+                    #print(phi)
 
 
 
@@ -223,26 +236,40 @@ def powers(D, T_hv, lst):
                 C_P_prime = C_T_prime*np.pi*xi*C_x/C_y
                 C_T_prime[-1] = C_T_prime[-2]
                 C_P_prime[-1] = C_P_prime[-2]
+                H_prime=0.5*rho*W**2*B*c*C_x
+
+                #plt.plot(xi, a_prime)
+
 
                 C_T=np.trapz(C_T_prime, x=xi)
                 C_P=np.trapz(C_P_prime, x=xi)
+                H=np.trapz(H_prime, x=r)
                 T+= 4 / np.pi ** 2 * C_T * rho * omega ** 2 * R ** 4/n_psi
                 P+=4/np.pi**3*C_P*rho*omega**3*R**5/n_psi
-                print(4/np.pi**3*C_P*rho*omega**3*R**5)
+                blade_drag+=H*np.cos(psi)/n_psi
+                #print(4/np.pi**3*C_P*rho*omega**3*R**5)
                 #print(W)
 
-                #plt.plot(xi, C_P_prime)
+                #plt.plot(xi, phi)
 
+            #plt.title(f'psi={psi}')
+            #plt.show()
+            #print(C_P_prime)
+            #print(f'P: {P}')
+            #print(f'T: {T}')
+            #print(f'blade_drag: {blade_drag}')
+            #print()
             #plt.title(f'omega={omega}, psi={psi}')
             #plt.show()
             #print(P)
             #print(T)
             #print()
             omega*=np.sqrt(T_conv/T)
-        powers.append(P)
+        powers.append([P, blade_drag])
 
     return powers
 
-print(powers(D=0.3048 * 5.75, T_hv=923, lst=[[923, 20, 10]]))
+#print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
 
+#print(design(3, 1100, 3.47))
 
