@@ -715,7 +715,6 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
             propeller_specific_mass_group.append(total_vehicle_mass_summary)
             productivty_mission_profiles[i][j][3][6].append(propeller_specific_mass_group)
 
-print(len(productivty_mission_profiles[2][3][3]))
 #Sanity Check
 print("Payload mass", payload_mass[2])
 print("OEM", class_I_operational_empty_mass[2])
@@ -789,20 +788,92 @@ print(productivty_mission_profiles[2][3][3][5][49][3][1] * payload_mass[2])
 print(productivty_mission_profiles[2][3][3][5][49][4][1] * payload_mass[2])
 
 print("Class II OEM")
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][0])
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][1])
+
+print("mission 1")
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][0])
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][1])
+
+print("mission 2")
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][0])
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][1])
+
+print("mission 3")
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][0])
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][1])
+
+print("mission 4")
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][0])
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][1])
+
+print("mission 5")
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][0])
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][1])
 
 print("Class II MTM")
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][2])
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][3])
+
+print("mission 1")
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][2])
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][3])
+
+print("mission 2")
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][2])
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][3])
+
+print("mission 3")
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][2])
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][3])
+
+print("mission 4")
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][2])
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][3])
+
+print("mission 5")
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][2])
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][3])
 
 print("Class II SM")
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][4])
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][5])
+
+print("mission 1")
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][4])
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][5])
+
+print("mission 2")
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][4])
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][5])
+
+print("mission 3")
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][4])
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][5])
+
+print("mission 4")
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][4])
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][5])
+
+print("mission 5")
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][4])
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][5])
 
 print("Class II Productivity ratio")
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][6])
-print(productivty_mission_profiles[2][3][3][5][49][0][3][0][7])
+
+print("mission 1")
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][6])
+print(productivty_mission_profiles[2][3][3][6][49][3][0][0][7])
+
+print("mission 2")
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][6])
+print(productivty_mission_profiles[2][3][3][6][49][3][1][0][7])
+
+print("mission 3")
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][6])
+print(productivty_mission_profiles[2][3][3][6][49][3][2][0][7])
+
+print("mission 4")
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][6])
+print(productivty_mission_profiles[2][3][3][6][49][3][3][0][7])
+
+print("mission 5")
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][6])
+print(productivty_mission_profiles[2][3][3][6][49][3][4][0][7])
 
 """
 #Component sizing result
