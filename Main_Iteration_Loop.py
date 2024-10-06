@@ -39,8 +39,9 @@ propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
 propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 
-plot_sample_productivity_mission_profile = True
+plot_sample_productivity_mission_profile = False
 plot_sample_analytical_power_curve = False
+plot_sample_analytical_mission_power_curve = False
 
 #----------------------------------------------------------------------------#
 #                      CLASS I WEIGHT ESTIMATION                             #
@@ -99,7 +100,7 @@ blade_tip_velocity = blade_tip_mach_number * air_speed_of_sound #m/s
 
 #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
-cruise_velocity = np.arange(10, 105, 5) #m/s 
+cruise_velocity = np.arange(5, 65, 5) #m/s 
 cruise_height = 300 #m (Design choice, could be bound by regulations)
 max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
 mission_distance = 3000.0 #m
@@ -148,8 +149,8 @@ for h in range(len(payload_mass)):
 
     productivty_mission_profiles.append(payload_specific_productivity_mission_profile)
 
-loaded_cruise_time = productivty_mission_profiles[2][2][0][0][len(productivty_mission_profiles[2][2][0][7]):len(productivty_mission_profiles[2][2][0][7])+len(productivty_mission_profiles[2][2][0][10])] #s
-unloaded_cruise_time = productivty_mission_profiles[2][2][0][0][len(productivty_mission_profiles[2][2][1][7]):len(productivty_mission_profiles[2][2][1][7])+len(productivty_mission_profiles[2][2][1][10])] #s
+loaded_cruise_time = productivty_mission_profiles[2][3][0][0][len(productivty_mission_profiles[2][3][0][7]):len(productivty_mission_profiles[2][3][0][7])+len(productivty_mission_profiles[2][3][0][10])] #s
+unloaded_cruise_time = productivty_mission_profiles[2][3][0][0][len(productivty_mission_profiles[2][3][1][7]):len(productivty_mission_profiles[2][3][1][7])+len(productivty_mission_profiles[2][3][1][10])] #s
 
 if plot_sample_productivity_mission_profile:
 
@@ -158,8 +159,8 @@ if plot_sample_productivity_mission_profile:
     fig.tight_layout(pad=3.0)
 
     # Subplot 1: Altitude vs Time
-    axes[0, 0].plot(productivty_mission_profiles[2][2][0][0], productivty_mission_profiles[2][2][0][1], label="Loaded") 
-    axes[0, 0].plot(productivty_mission_profiles[2][2][1][0], productivty_mission_profiles[2][2][1][1], label="Unloaded") 
+    axes[0, 0].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][1], label="Loaded") 
+    axes[0, 0].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][1], label="Unloaded") 
     axes[0, 0].set_title('Altitude vs Time')  
     axes[0, 0].set_xlabel('Time (s)')  
     axes[0, 0].set_ylabel('Altitude (m)') 
@@ -167,8 +168,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 0].grid(True)
 
     # Subplot 2: Velocity vs Time
-    axes[0, 1].plot(productivty_mission_profiles[2][2][0][0], productivty_mission_profiles[2][2][0][2], label="Loaded") 
-    axes[0, 1].plot(productivty_mission_profiles[2][2][1][0], productivty_mission_profiles[2][2][1][2], label="Unloaded") 
+    axes[0, 1].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][2], label="Loaded") 
+    axes[0, 1].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][2], label="Unloaded") 
     axes[0, 1].set_title('Velocity vs Time')  
     axes[0, 1].set_xlabel('Time (s)')  
     axes[0, 1].set_ylabel('Velocity (m/s)') 
@@ -176,8 +177,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 1].grid(True)
 
     # Subplot 3: Thrust vs Time
-    axes[0, 2].plot(productivty_mission_profiles[2][2][0][0], productivty_mission_profiles[2][2][0][3], label="Loaded") 
-    axes[0, 2].plot(productivty_mission_profiles[2][2][1][0], productivty_mission_profiles[2][2][1][3], label="Unloaded") 
+    axes[0, 2].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][3], label="Loaded") 
+    axes[0, 2].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][3], label="Unloaded") 
     axes[0, 2].set_title('Thrust vs Time')  
     axes[0, 2].set_xlabel('Time (s)')  
     axes[0, 2].set_ylabel('Thrust (N)') 
@@ -185,8 +186,8 @@ if plot_sample_productivity_mission_profile:
     axes[0, 2].grid(True)
 
     # Subplot 4: Altitude vs Distance
-    axes[1, 0].plot(productivty_mission_profiles[2][2][0][5], productivty_mission_profiles[2][2][0][1], label="Loaded") 
-    axes[1, 0].plot(productivty_mission_profiles[2][2][1][5], productivty_mission_profiles[2][2][1][1], label="Unloaded") 
+    axes[1, 0].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][1], label="Loaded") 
+    axes[1, 0].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][1], label="Unloaded") 
     axes[1, 0].set_title('Altitude vs Distance')  
     axes[1, 0].set_xlabel('Distance (m)')  
     axes[1, 0].set_ylabel('Altitude (m)') 
@@ -194,8 +195,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 0].grid(True)
 
     # Subplot 5: Velocity vs Distance
-    axes[1, 1].plot(productivty_mission_profiles[2][2][0][5], productivty_mission_profiles[2][2][0][2], label="Loaded") 
-    axes[1, 1].plot(productivty_mission_profiles[2][2][1][5], productivty_mission_profiles[2][2][1][2], label="Unloaded") 
+    axes[1, 1].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][2], label="Loaded") 
+    axes[1, 1].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][2], label="Unloaded") 
     axes[1, 1].set_title('Velocity vs Distance')  
     axes[1, 1].set_xlabel('Distance (m)')  
     axes[1, 1].set_ylabel('Velocity (m/s)') 
@@ -203,8 +204,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 1].grid(True)
 
     # Subplot 6: Thrust vs Distance
-    axes[1, 2].plot(productivty_mission_profiles[2][2][0][5], productivty_mission_profiles[2][2][0][3], label="Loaded") 
-    axes[1, 2].plot(productivty_mission_profiles[2][2][1][5], productivty_mission_profiles[2][2][1][3], label="Unloaded") 
+    axes[1, 2].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][3], label="Loaded") 
+    axes[1, 2].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][3], label="Unloaded") 
     axes[1, 2].set_title('Thrust vs Distance')  
     axes[1, 2].set_xlabel('Distance (m)')  
     axes[1, 2].set_ylabel('Thrust (N)') 
@@ -212,8 +213,8 @@ if plot_sample_productivity_mission_profile:
     axes[1, 2].grid(True)
 
     # Subplot 7: Angle of Attack vs Time
-    axes[2, 0].plot(loaded_cruise_time, np.degrees(productivty_mission_profiles[2][2][0][11]), label="Loaded") 
-    axes[2, 0].plot(unloaded_cruise_time, np.degrees(productivty_mission_profiles[2][2][1][11]), label="Unloaded") 
+    axes[2, 0].plot(loaded_cruise_time, np.degrees(productivty_mission_profiles[2][3][0][11]), label="Loaded") 
+    axes[2, 0].plot(unloaded_cruise_time, np.degrees(productivty_mission_profiles[2][3][1][11]), label="Unloaded") 
     axes[2, 0].set_title('Angle of Attack vs Time')  
     axes[2, 0].set_xlabel('Time (s)')  
     axes[2, 0].set_ylabel('Angle of attack (deg)') 
@@ -221,8 +222,8 @@ if plot_sample_productivity_mission_profile:
     axes[2, 0].grid(True)
 
     # Subplot 8: Total Thrust vs Time
-    axes[2, 1].plot(productivty_mission_profiles[2][2][0][0], np.hstack((productivty_mission_profiles[2][2][0][7], productivty_mission_profiles[2][2][0][10], productivty_mission_profiles[2][2][0][12])), label="Loaded") 
-    axes[2, 1].plot(productivty_mission_profiles[2][2][1][0], np.hstack((productivty_mission_profiles[2][2][1][7], productivty_mission_profiles[2][2][1][10], productivty_mission_profiles[2][2][1][12])), label="Unloaded") 
+    axes[2, 1].plot(productivty_mission_profiles[2][3][0][0], np.hstack((productivty_mission_profiles[2][3][0][7], productivty_mission_profiles[2][3][0][10], productivty_mission_profiles[2][3][0][12])), label="Loaded") 
+    axes[2, 1].plot(productivty_mission_profiles[2][3][1][0], np.hstack((productivty_mission_profiles[2][3][1][7], productivty_mission_profiles[2][3][1][10], productivty_mission_profiles[2][3][1][12])), label="Unloaded") 
     axes[2, 1].set_title('Total Thrust vs Time')  
     axes[2, 1].set_xlabel('Time (s)')  
     axes[2, 1].set_ylabel('Total Thrust (N)') 
@@ -230,8 +231,8 @@ if plot_sample_productivity_mission_profile:
     axes[2, 1].grid(True)
 
     # Subplot 9: Power vs Time
-    axes[2, 2].plot(productivty_mission_profiles[2][2][0][0], productivty_mission_profiles[2][2][0][4], label="Loaded") 
-    axes[2, 2].plot(productivty_mission_profiles[2][2][1][0], productivty_mission_profiles[2][2][1][4], label="Unloaded") 
+    axes[2, 2].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][4], label="Loaded") 
+    axes[2, 2].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][4], label="Unloaded") 
     axes[2, 2].set_title('Power vs Time')  
     axes[2, 2].set_xlabel('Time (s)')  
     axes[2, 2].set_ylabel('Power (W)') 
@@ -389,6 +390,16 @@ for s in range(len(productivty_mission_profiles)): #Loop over each payload combi
             mission_velocity_specific_power_values.append(propeller_specific_power_values)
         productivty_mission_profiles[s][q][3].append(mission_velocity_specific_power_values)
 
+if plot_sample_analytical_mission_power_curve:
+
+    time = productivty_mission_profiles[2][3][0][0]
+    power_profile = np.concatenate((productivty_mission_profiles[2][3][3][3][49][1][1], productivty_mission_profiles[2][3][3][3][49][1][3], productivty_mission_profiles[2][3][3][3][49][1][2]))
+    plt.plot(time, power_profile)
+    plt.title("Productivity Mission Power Profile")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Power (W)")
+    plt.show()
+
 if plot_sample_analytical_power_curve:
     cruise_velocity_list = []
     cruise_power_list = []
@@ -396,19 +407,19 @@ if plot_sample_analytical_power_curve:
     cruise_profile_power_list = []
     cruise_parasitic_power_list = []
     cruise_power_numerical_list = []
-    for y in range(len(productivty_mission_profiles[0])):
-        cruise_velocity_list.append(productivty_mission_profiles[0][y][2])
-        cruise_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][0]))
-        cruise_induced_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][1]))
-        cruise_profile_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][2]))
-        cruise_parasitic_power_list.append(np.mean(productivty_mission_profiles[0][y][3][3][0][1][4][3]))
-        cruise_power_numerical_list.append(productivty_mission_profiles[0][y][3][4][0][1][3])
+    for y in range(len(productivty_mission_profiles[2])):
+        cruise_velocity_list.append(productivty_mission_profiles[2][y][2])
+        cruise_power_list.append(np.mean(productivty_mission_profiles[2][y][3][3][49][1][4][0]))
+        cruise_induced_power_list.append(np.mean(productivty_mission_profiles[2][y][3][3][49][1][4][1]))
+        cruise_profile_power_list.append(np.mean(productivty_mission_profiles[2][y][3][3][49][1][4][2]))
+        cruise_parasitic_power_list.append(np.mean(productivty_mission_profiles[2][y][3][3][49][1][4][3]))
+        #cruise_power_numerical_list.append(productivty_mission_profiles[2][y][3][4][49][1][3])
 
     plt.plot(cruise_velocity_list, cruise_power_list, label="Total cruise power")
     plt.plot(cruise_velocity_list, cruise_induced_power_list, label="Induced cruise power")
     plt.plot(cruise_velocity_list, cruise_profile_power_list, label="Profile cruise power")
     plt.plot(cruise_velocity_list, cruise_parasitic_power_list, label="Parasitic cruise power")
-    plt.plot(cruise_velocity_list, cruise_power_numerical_list, label="Numerical cruise power")
+    #plt.plot(cruise_velocity_list, cruise_power_numerical_list, label="Numerical cruise power")
     plt.title("Sample Cruise Power Plot with Varying Cruise Velocity")
     plt.xlabel("Cruise Velocity (m/s)")
     plt.ylabel("Cruise Power (W)")
@@ -459,10 +470,15 @@ for p in range(len(productivty_mission_profiles)): #Loop through all payload com
                 loaded_flight_counter = 0 #Stores the amount of loaded flights
                 battery_change_times = 0 #Stores the amount of battery changes
 
-                loaded_climb_time = np.sum(productivty_mission_profiles[p][t][0][0][:len(productivty_mission_profiles[p][t][0][7])]) #s
-                unloaded_climb_time = np.sum(productivty_mission_profiles[p][t][1][0][:len(productivty_mission_profiles[p][t][1][7])]) #s
-                loaded_cruise_time = np.sum(productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][0][7]):len(productivty_mission_profiles[p][t][0][7])+len(productivty_mission_profiles[p][t][0][10])]) #s
-                unloaded_cruise_time = np.sum(productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][1][7]):len(productivty_mission_profiles[p][t][1][7])+len(productivty_mission_profiles[p][t][1][10])]) #s
+                loaded_climb_time_array = productivty_mission_profiles[p][t][0][0][:len(productivty_mission_profiles[p][t][0][7])] 
+                unloaded_climb_time_array = productivty_mission_profiles[p][t][1][0][:len(productivty_mission_profiles[p][t][1][7])]
+                loaded_cruise_time_array = productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][0][7]):len(productivty_mission_profiles[p][t][0][7])+len(productivty_mission_profiles[p][t][0][10])]
+                unloaded_cruise_time_array = productivty_mission_profiles[p][t][0][0][len(productivty_mission_profiles[p][t][1][7]):len(productivty_mission_profiles[p][t][1][7])+len(productivty_mission_profiles[p][t][1][10])]
+
+                loaded_climb_time = loaded_climb_time_array[-1] - loaded_climb_time_array[0] #s
+                unloaded_climb_time = unloaded_climb_time_array[-1] - unloaded_climb_time_array[0] #s
+                loaded_cruise_time = loaded_cruise_time_array[-1] - loaded_cruise_time_array[0] #s
+                unloaded_cruise_time = unloaded_cruise_time_array[-1] - unloaded_cruise_time_array[0] #s
 
                 #Mission loop
                 while mission_time < (90 * 60):  #Mission requirement
@@ -516,8 +532,8 @@ for p in range(len(productivty_mission_profiles)): #Loop through all payload com
                 mission_climb_time = loaded_flight_number * loaded_climb_time + unloaded_flight_number * unloaded_climb_time #s
                 mission_cruise_time = loaded_flight_number * loaded_cruise_time + unloaded_flight_number * unloaded_cruise_time #s
                 battery_pack_number = battery_change_times
-
-                specific_productivity_mission_information = [total_flight_number, loaded_flight_number, unloaded_flight_number, mission_climb_time, mission_cruise_time, battery_pack_number, single_charge_flight_number, loaded_climb_time, unloaded_climb_time, loaded_cruise_time, unloaded_cruise_time]
+                total_ferried_payload = payload_mass[i] * loaded_flight_number
+                specific_productivity_mission_information = [total_flight_number, loaded_flight_number, unloaded_flight_number, mission_climb_time, mission_cruise_time, battery_pack_number, single_charge_flight_number, loaded_climb_time, unloaded_climb_time, loaded_cruise_time, unloaded_cruise_time, mission_time]
                 propeller_specific_productivity_mission_information.append(specific_productivity_mission_information)
             productivty_mission_profiles[p][t][3][5].append(propeller_specific_productivity_mission_information)
 
@@ -541,7 +557,6 @@ for p in range(len(productivty_mission_profiles)): #Loop through all payload com
 for i in range(len(productivty_mission_profiles)): #Loop through all payload combinations
     for j in range(len(productivty_mission_profiles[i])): #Loop through all cruise velocities for 1 payload combination
         for k in range(len(productivty_mission_profiles[i][j][3][0])): #Loop through all propeller sizes for 1 payload and 1 cruise velocity combination
-            propeller_specific_energy_values = []
             for l in range(5): #Loop through all battery change rates
                 
                 single_charge_flight_number = productivty_mission_profiles[i][j][3][5][k][l][6]
@@ -557,18 +572,18 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
                 loaded_climb_energy = productivty_mission_profiles[i][j][3][5][k][l][7] * productivty_mission_profiles[i][j][3][4][k][1][1] * loaded_flights_per_battery #J
                 unloaded_climb_energy = productivty_mission_profiles[i][j][3][5][k][l][8] * productivty_mission_profiles[i][j][3][4][k][2][1] * unloaded_flights_per_battery #J
                 loaded_descent_energy = productivty_mission_profiles[i][j][3][5][k][l][7] * productivty_mission_profiles[i][j][3][4][k][1][2] * loaded_flights_per_battery #J
-                unloaded_descent_energy = productivty_mission_profiles[i][j][3][5][k][l][8] * productivty_mission_profiles[i][j][3][4][k][2][2] * loaded_flights_per_battery #J
+                unloaded_descent_energy = productivty_mission_profiles[i][j][3][5][k][l][8] * productivty_mission_profiles[i][j][3][4][k][2][2] * unloaded_flights_per_battery #J
                 loaded_cruise_energy = productivty_mission_profiles[i][j][3][5][k][l][9] * productivty_mission_profiles[i][j][3][4][k][1][3] * loaded_flights_per_battery #J
-                unloaded_cruise_energy = productivty_mission_profiles[i][j][3][5][k][l][10] * productivty_mission_profiles[i][j][3][4][k][2][3] * loaded_flights_per_battery #J
+                unloaded_cruise_energy = productivty_mission_profiles[i][j][3][5][k][l][10] * productivty_mission_profiles[i][j][3][4][k][2][3] * unloaded_flights_per_battery #J
                 total_numerical_battery_energy = hover_energy + loaded_climb_energy + unloaded_climb_energy + loaded_descent_energy + unloaded_descent_energy + loaded_cruise_energy + unloaded_cruise_energy #J
                 productivty_mission_profiles[i][j][3][5][k][l].append(total_numerical_battery_energy)
                 
                 #Analytical method power estimation
-                hover_energy = loiter_hover_time * productivty_mission_profiles[i][j][3][3][k][1][0] #J (Hover is always taken as loaded)
+                hover_energy = loiter_hover_time * productivty_mission_profiles[i][j][3][3][k][1][0][0] #J (Hover is always taken as loaded)
                 loaded_power_profile = np.concatenate((productivty_mission_profiles[i][j][3][3][k][1][1], productivty_mission_profiles[i][j][3][3][k][1][3], productivty_mission_profiles[i][j][3][3][k][1][2]))
                 unloaded_power_profile = np.concatenate((productivty_mission_profiles[i][j][3][3][k][2][1], productivty_mission_profiles[i][j][3][3][k][2][3], productivty_mission_profiles[i][j][3][3][k][2][2]))
-                loaded_energy = trapz(loaded_power_profile, productivty_mission_profiles[i][j][0][0]) #J
-                unloaded_energy = trapz(unloaded_power_profile, productivty_mission_profiles[i][j][1][0]) #J
+                loaded_energy = trapz(loaded_power_profile, productivty_mission_profiles[i][j][0][0]) * loaded_flights_per_battery #J
+                unloaded_energy = trapz(unloaded_power_profile, productivty_mission_profiles[i][j][1][0]) * unloaded_flights_per_battery #J
                 total_analytical_battery_energy = hover_energy + loaded_energy + unloaded_energy #J
                 productivty_mission_profiles[i][j][3][5][k][l].append(total_analytical_battery_energy)
 
@@ -583,7 +598,7 @@ battery_energy_density = 270.0 * 3600.0 #J/kg (could range between 170-350 Wh/kg
 fuselage_length = 2.0 #m (CAD)
 fuselage_height = 0.7 #m (CAD)
 fuselage_width = 0.7 #m (CAD)
-fuselage_perimiter = 6.35 #m (CAD)
+fuselage_perimiter = 2.8 #m (CAD)
 number_of_passengers = 1.0 #Alex
 fuselage_wetted_area_3 = (2.0 * fuselage_length * fuselage_height) + (fuselage_height * fuselage_width * 2.0) + (fuselage_width * fuselage_length * 2.0) #m^2 (Assuming a prism and that all the area is wetted)
 number_of_landing_gears = 4.0
@@ -598,25 +613,15 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
         for k in range(len(productivty_mission_profiles[i][j][3][0])): #Loop through all propeller sizes for 1 payload and 1 cruise velocity combination
             propeller_specific_mass_group = [] #Contains the class II masses for a specific propeller configuration
             battery_masses = [] #Contains 5 lists for each run type, each with 2 lists for numerical and analytical battery mass prediction
+            total_vehicle_mass_summary = []
 
-            for l in range(5): #Loop through all battery change rates
-                
-                #Battery sizing
-                numerical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][11] #J
-                analytical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][12] #J
-                numerical_battery_mass = 1.05 * (numerical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
-                analytical_battery_mass = 1.05 * (analytical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
-                total_numerical_battery_packs_mass = numerical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
-                total_analytical_battery_packs_mass = analytical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
-                battery_mass_summary = [[analytical_battery_mass, total_analytical_battery_packs_mass], [numerical_battery_mass, total_numerical_battery_packs_mass]]
-                battery_masses.append(battery_mass_summary)
 
             #Original Excel Weight Formulas
             total_fuselage_mass_1 = 14.86 * (class_I_maximum_take_off_mass[i]**(0.144)) * ((fuselage_length**(0.778))/(fuselage_perimiter)) * (fuselage_length**(0.383)) * (number_of_passengers**(0.455)) #kg 
-            analytical_propeller_blades_mass_1 = (0.144 * ((propeller_diameter * productivty_mission_profiles[i][j][3][3][k][1][4][5] * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
-            analytical_propeller_motor_mass_1 = ((0.165 * productivty_mission_profiles[i][j][3][3][k][1][4][5])  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
-            numerical_propeller_blades_mass_1 = (0.144 * ((propeller_diameter * productivty_mission_profiles[i][j][3][4][k][1][1] * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
-            numerical_propeller_motor_mass_1 = ((0.165 * productivty_mission_profiles[i][j][3][4][k][1][1])  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
+            analytical_propeller_blades_mass_1 = (0.144 * ((productivty_mission_profiles[i][j][3][0][k] * (productivty_mission_profiles[i][j][3][3][k][1][4][5]/1000.0) * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
+            analytical_propeller_motor_mass_1 = ((0.165 * (productivty_mission_profiles[i][j][3][3][k][1][4][5]/1000.0))  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
+            numerical_propeller_blades_mass_1 = (0.144 * ((productivty_mission_profiles[i][j][3][0][k] * (productivty_mission_profiles[i][j][3][4][k][1][1]/1000.0) * np.sqrt(number_of_blades))/(number_of_propellers))**(0.782)) * number_of_propellers #kg (Preferred from manufacturer)
+            numerical_propeller_motor_mass_1 = ((0.165 * (productivty_mission_profiles[i][j][3][4][k][1][1]/1000.0))  / number_of_propellers) * number_of_propellers #kg (Preferred from manufacturer)
 
             #Rohit's Class II Weight Estimation (1-6)
 
@@ -642,12 +647,12 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
             #total_fuselage_mass_2 = fuselage_skin_mass + bulkhead_mass #kg (Rohits class II formula sheet source, soem definitions aren't the clearest and it depends a lot on structural considerations)
 
             #Rohit's Class II Weight Estimation (7) (realible)
-            propeller_blades_mass_3 = (2.20462/1000.0) * ((7200.0/500.0) * (np.mean(productivty_mission_profiles[i][j][1][10]) * 4.4482 - 300.0) + 800.0) * number_of_propellers * pound_to_kilo_conversion_factor #kg (Also includes hub mass)
+            propeller_blades_mass_3 = (2.20462/1000.0) * ((7200.0/500.0) * ((np.mean(productivty_mission_profiles[i][j][0][10])/number_of_propellers) * 4.4482 - 300.0) + 800.0) * number_of_propellers * pound_to_kilo_conversion_factor #kg (Also includes hub mass)
             #additional_hub_mass = 0.0037 * (number_of_blades)**(0.28) * (propeller_diameter/2.0)**(1.5) * (blade_tip_velocity)**(0.43) * (0.01742 * (number_of_blades)**(0.66) * propeller_chord * (propeller_diameter / 2.0)**(1.3) * (blade_tip_velocity)**(0.67) + g * (np.pi * (propeller_diameter/2.0)**(0.5))**(0.5))**(0.55) kg (Only used in the second iteration and correct units to imperial)
-            analytical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6]) / 1000.0) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-            numerical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3]) / 1000.0) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-            analytical_motor_controller_mass = 2.20462 * ((49.9/398.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-            numerical_motor_controller_mass = 2.20462 * ((49.9/398.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+            analytical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/number_of_propellers) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+            numerical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/number_of_propellers) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+            analytical_motor_controller_mass = 2.20462 * ((49.9/398.0) * (((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/number_of_propellers)/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+            numerical_motor_controller_mass = 2.20462 * ((49.9/398.0) * (((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/number_of_propellers)/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
             total_fuselage_mass_3 = 6.9 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor)/1000.0)**(0.49) * (fuselage_length * meters_to_feet_conversion_factor)**(0.61) * (fuselage_wetted_area_3 * square_meters_to_square_feet_conversion_factor)**(0.25) * pound_to_kilo_conversion_factor #kg
             landing_gear_mass_3 = 40 * (class_I_maximum_take_off_mass[i]/1000.0)**(0.47) * number_of_landing_gears**(0.54) * pound_to_kilo_conversion_factor #kg
             flight_control_system_mass = 11.5 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor)/1000.0)**(0.4) * pound_to_kilo_conversion_factor #kg
@@ -666,12 +671,51 @@ for i in range(len(productivty_mission_profiles)): #Loop through all payload com
 
             numerical_mass_summary = [total_fuselage_mass_1, numerical_propeller_motor_mass_1, numerical_propeller_blades_mass_1, propeller_blades_mass_3, numerical_propeller_motor_mass_3, numerical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass]
             analytical_mass_summary = [total_fuselage_mass_1, analytical_propeller_motor_mass_1, analytical_propeller_blades_mass_1, propeller_blades_mass_3, analytical_propeller_motor_mass_3, analytical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass]
+            
+            for l in range(5): #Loop through all battery change rates
+                
+                #Battery sizing
+                numerical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][12] #J
+                analytical_total_single_battery_energy = productivty_mission_profiles[i][j][3][5][k][l][13] #J
+                numerical_battery_mass = 1.05 * (numerical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
+                analytical_battery_mass = 1.05 * (analytical_total_single_battery_energy * (1.0 + minimum_battery_state_of_charge)) / (battery_energy_density * battery_efficiency) #kg (Individual battery pack mass, factor of 1.05 for avionicss and other sytems consumption)
+                total_numerical_battery_packs_mass = numerical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
+                total_analytical_battery_packs_mass = analytical_battery_mass * productivty_mission_profiles[i][j][3][5][k][l][5] #kg (Total mass of all battery packs needed)
+                battery_mass_summary = [[analytical_battery_mass, total_analytical_battery_packs_mass], [numerical_battery_mass, total_numerical_battery_packs_mass]]
+                battery_masses.append(battery_mass_summary)
+
+                analytical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + analytical_propeller_motor_mass_1 + analytical_propeller_blades_mass_1 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass #kg
+                analytical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + analytical_propeller_motor_mass_3 + propeller_blades_mass_3 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass #kg
+                numerical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + numerical_propeller_motor_mass_1 + numerical_propeller_blades_mass_1 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass #kg
+                numerical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + numerical_propeller_motor_mass_3 + propeller_blades_mass_3 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass #kg
+            
+                analytical_class_II_maximum_take_off_mass_1 = analytical_class_II_operational_empty_mass_1 + payload_mass[i] #kg
+                analytical_class_II_maximum_take_off_mass_3 = analytical_class_II_operational_empty_mass_3 + payload_mass[i] #kg
+                numerical_class_II_maximum_take_off_mass_1 = numerical_class_II_operational_empty_mass_1 + payload_mass[i] #kg
+                numerical_class_II_maximum_take_off_mass_3 = numerical_class_II_operational_empty_mass_3 + payload_mass[i] #kg
+
+                analytical_system_mass_1 = total_fuselage_mass_1 + analytical_propeller_motor_mass_1 + analytical_propeller_blades_mass_1 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + total_analytical_battery_packs_mass #kg
+                analytical_system_mass_3 = total_fuselage_mass_3 + analytical_propeller_motor_mass_3 + propeller_blades_mass_3 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + total_analytical_battery_packs_mass #kg
+                numerical_system_mass_1 = total_fuselage_mass_1 + numerical_propeller_motor_mass_1 + numerical_propeller_blades_mass_1 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + total_numerical_battery_packs_mass #kg
+                numerical_system_mass_3 = total_fuselage_mass_3 + numerical_propeller_motor_mass_3 + propeller_blades_mass_3 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + total_numerical_battery_packs_mass #kg
+                
+                analytical_productivity_ratio_1 = (productivty_mission_profiles[i][j][3][5][k][l][1] * payload_mass[i]) / analytical_system_mass_1 
+                analytical_productivity_ratio_3 = (productivty_mission_profiles[i][j][3][5][k][l][1] * payload_mass[i]) / analytical_system_mass_3 
+                numerical_productivity_ratio_1 = (productivty_mission_profiles[i][j][3][5][k][l][1] * payload_mass[i]) / numerical_system_mass_1 
+                numerical_productivity_ratio_3 = (productivty_mission_profiles[i][j][3][5][k][l][1] * payload_mass[i]) / numerical_system_mass_3 
+
+                total_analytical_mass_summary = [analytical_class_II_operational_empty_mass_1, analytical_class_II_operational_empty_mass_3, analytical_class_II_maximum_take_off_mass_1, analytical_class_II_maximum_take_off_mass_3, analytical_system_mass_1, analytical_system_mass_3, analytical_productivity_ratio_1, analytical_productivity_ratio_3]
+                total_numerical_mass_summary = [numerical_class_II_operational_empty_mass_1, numerical_class_II_operational_empty_mass_3, numerical_class_II_maximum_take_off_mass_1, numerical_class_II_maximum_take_off_mass_3, numerical_system_mass_1, numerical_system_mass_3, numerical_productivity_ratio_1, numerical_productivity_ratio_3]
+                total_mass_summary = [total_analytical_mass_summary, total_numerical_mass_summary]
+                total_vehicle_mass_summary.append(total_mass_summary)
+
             propeller_specific_mass_group.append(battery_masses)
             propeller_specific_mass_group.append(numerical_mass_summary)
             propeller_specific_mass_group.append(analytical_mass_summary)
+            propeller_specific_mass_group.append(total_vehicle_mass_summary)
             productivty_mission_profiles[i][j][3][6].append(propeller_specific_mass_group)
 
-
+print(len(productivty_mission_profiles[2][3][3]))
 #Sanity Check
 print("Payload mass", payload_mass[2])
 print("OEM", class_I_operational_empty_mass[2])
@@ -680,9 +724,85 @@ print("Maximum total and individual thrust", maximum_maneuvering_total_thrust[2]
 print("Loaded thrust total", loaded_cruise_total_thrust[2])
 print("Unloaded thrust total", unloaded_cruise_total_thrust[2])
 print("statistical propeller diameter", propeller_diameter_min[2])
-print("cruise velocity", cruise_velocity[2])
-print("Propeller diameter", productivty_mission_profiles[2][2][3][0][49])
+print("cruise velocity", cruise_velocity[3])
+print("Propeller diameter", productivty_mission_profiles[2][3][3][0][49])
+print("Mission 1")
+print(productivty_mission_profiles[2][3][3][5][49][0])
+print(len(productivty_mission_profiles[2][3][3][5][49][0]))
+print(productivty_mission_profiles[2][3][3][5][49][0][-1])
+print(productivty_mission_profiles[2][3][3][5][49][0][-2])
+print("Mission 2")
+print(productivty_mission_profiles[2][3][3][5][49][1])
+print("Mission 3")
+print(productivty_mission_profiles[2][3][3][5][49][2])
+print("Mission 4")
+print(productivty_mission_profiles[2][3][3][5][49][3])
+print("Mission 5")
+print(productivty_mission_profiles[2][3][3][5][49][4])
 
+print("Masses")
+print("fuselage", productivty_mission_profiles[2][3][3][6][49][2][0])
+print("motor 1", productivty_mission_profiles[2][3][3][6][49][2][1])
+print("blade 1 ", productivty_mission_profiles[2][3][3][6][49][2][2])
+print("blade 3", productivty_mission_profiles[2][3][3][6][49][2][3])
+print("motor 3", productivty_mission_profiles[2][3][3][6][49][2][4])
+print("motor controller", productivty_mission_profiles[2][3][3][6][49][2][5])
+print("fuselage 3", productivty_mission_profiles[2][3][3][6][49][2][6])
+print("landing gear", productivty_mission_profiles[2][3][3][6][49][2][7])
+print("flight controller", productivty_mission_profiles[2][3][3][6][49][2][8])
+print("avionics", productivty_mission_profiles[2][3][3][6][49][2][9])
+print("furnishings", productivty_mission_profiles[2][3][3][6][49][2][10])
+
+
+print("battery mass 1")
+print("number of battery packs", productivty_mission_profiles[2][3][3][5][49][0][5])
+print("total energy", productivty_mission_profiles[2][3][3][5][49][0][13])
+print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][0][0][0])
+print("total battery mass", productivty_mission_profiles[2][3][3][6][49][0][0][0][1])
+print("single battery energy", productivty_mission_profiles[2][3][3][5][49][0][13])
+
+print("battery mass 2")
+print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][1][0][0])
+print("total battery mass", productivty_mission_profiles[2][3][3][6][49][0][1][0][1])
+print("single battery energy", productivty_mission_profiles[2][3][3][5][49][1][13])
+
+print("battery mass 3")
+print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][2][0][0])
+print("total battery mass", productivty_mission_profiles[2][3][3][6][49][0][2][0][1])
+print("single battery energy", productivty_mission_profiles[2][3][3][5][49][2][13])
+
+print("battery mass 4")
+print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][3][0][0])
+print("total battery mass", productivty_mission_profiles[2][3][3][6][49][0][3][0][1])
+print("single battery energy", productivty_mission_profiles[2][3][3][5][49][3][13])
+
+print("battery mass 5")
+print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][4][0][0])
+print("total battery mass", productivty_mission_profiles[2][3][3][6][49][0][4][0][1])
+print("single battery energy", productivty_mission_profiles[2][3][3][5][49][4][13])
+
+print("Total ferried payload in the 5 missions")
+print(productivty_mission_profiles[2][3][3][5][49][0][1] * payload_mass[2])
+print(productivty_mission_profiles[2][3][3][5][49][1][1] * payload_mass[2])
+print(productivty_mission_profiles[2][3][3][5][49][2][1] * payload_mass[2])
+print(productivty_mission_profiles[2][3][3][5][49][3][1] * payload_mass[2])
+print(productivty_mission_profiles[2][3][3][5][49][4][1] * payload_mass[2])
+
+print("Class II OEM")
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][0])
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][1])
+
+print("Class II MTM")
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][2])
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][3])
+
+print("Class II SM")
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][4])
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][5])
+
+print("Class II Productivity ratio")
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][6])
+print(productivty_mission_profiles[2][3][3][5][49][0][3][0][7])
 
 """
 #Component sizing result
