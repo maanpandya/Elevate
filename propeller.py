@@ -13,7 +13,7 @@ dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
 a = 340
 B=2
-foil = 'NACA 2421'
+foil = 'NACA 4415'
 foilpath = foil.replace(" ", "_")
 
 def design(D, T_hv, V):
