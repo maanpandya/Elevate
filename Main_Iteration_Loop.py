@@ -86,7 +86,7 @@ for ñ in range(number_of_iterations):
     maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
     loaded_cruise_total_thrust = class_I_maximum_take_off_mass * g * maximum_thrust_to_weight #N (Vertical thrust component for L=W)
     unloaded_cruise_total_thrust = class_I_operational_empty_mass * g * maximum_thrust_to_weight #N (Vertical thrust component for L=W)
-
+    
     #-------------------------Rotor Sizing----------------------------#
 
     #First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
