@@ -144,7 +144,7 @@ def optimize_structure(T=833, L=1.8, sigmaY=280, rho=2770, htruss=0.5, E=71*10**
                                                    ttruss_min, ttruss_max, dtruss_min, dtruss_max, truss=truss)
     return best_params
 
-
+"""
 # Example usage:
 configuration = int(input("Select configuration: No truss (1), Truss (2): "))
 truss_option = True if configuration == 2 else False
@@ -153,3 +153,5 @@ result = optimize_structure(truss=truss_option)
 print("\nOptimal Configuration:")
 for key, value in result.items():
     print(f"{key}: {value}")
+"""
+

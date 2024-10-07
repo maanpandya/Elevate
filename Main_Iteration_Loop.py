@@ -4,6 +4,7 @@ from propeller_diameter import diamgenerator
 from productivity_mission_profile import generate_data
 from propeller import powers
 from scipy.integrate import trapz
+from Structures_scripts.finaltrussactuallyfinal import optimize_structure
 
 #----------------------------------------------------------------------------#
 #             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
@@ -656,17 +657,18 @@ for ñ in range(number_of_iterations):
                 #total_fuselage_mass_2 = fuselage_skin_mass + bulkhead_mass #kg (Rohits class II formula sheet source, soem definitions aren't the clearest and it depends a lot on structural considerations)
 
                 #Rohit's Class II Weight Estimation (7) (realible)
-                propeller_blades_mass_3 = (2.20462/1000.0) * ((7200.0/500.0) * ((np.mean(productivty_mission_profiles[i][j][0][10])/number_of_propellers) * 4.4482 - 300.0) + 800.0) * number_of_propellers * pound_to_kilo_conversion_factor #kg (Also includes hub mass)
+                propeller_blades_mass_3 = (2.20462/1000.0) * ((7200.0/500.0) * (1.5 * (np.max(productivty_mission_profiles[i][j][0][10])/number_of_propellers) - 300.0) + 800.0) * number_of_propellers * pound_to_kilo_conversion_factor #kg (Also includes hub mass)
                 #additional_hub_mass = 0.0037 * (number_of_blades)**(0.28) * (propeller_diameter/2.0)**(1.5) * (blade_tip_velocity)**(0.43) * (0.01742 * (number_of_blades)**(0.66) * propeller_chord * (propeller_diameter / 2.0)**(1.3) * (blade_tip_velocity)**(0.67) + g * (np.pi * (propeller_diameter/2.0)**(0.5))**(0.5))**(0.55) kg (Only used in the second iteration and correct units to imperial)
-                analytical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/number_of_propellers) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-                numerical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/number_of_propellers) * productivty_mission_profiles[i][j][3][2][k] * 1.3558) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-                analytical_motor_controller_mass = 2.20462 * ((49.9/398.0) * (((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/number_of_propellers)/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
-                numerical_motor_controller_mass = 2.20462 * ((49.9/398.0) * (((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/number_of_propellers)/1000.0) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+                analytical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/(number_of_propellers * productivty_mission_profiles[i][j][3][2][k])) -  10) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+                numerical_propeller_motor_mass_3 = 2.20462 * ((58.0 / 990.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/(number_of_propellers * productivty_mission_profiles[i][j][3][2][k])) - 10) + 2) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+                analytical_motor_controller_mass = 2.20462 * ((49.9/398.0) * ((max(productivty_mission_profiles[i][j][3][3][k][1][4][0], productivty_mission_profiles[i][j][3][3][k][1][4][4], productivty_mission_profiles[i][j][3][3][k][1][4][5], productivty_mission_profiles[i][j][3][3][k][1][4][6])/(number_of_propellers * 1000.0)) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
+                numerical_motor_controller_mass = 2.20462 * ((49.9/398.0) * ((max(productivty_mission_profiles[i][j][3][4][k][1][0], productivty_mission_profiles[i][j][3][4][k][1][1], productivty_mission_profiles[i][j][3][4][k][1][2], productivty_mission_profiles[i][j][3][4][k][1][3])/(number_of_propellers * 1000.0)) - 2) + 0.1) * number_of_propellers * pound_to_kilo_conversion_factor #kg
                 total_fuselage_mass_3 = 6.9 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor)/1000.0)**(0.49) * (fuselage_length * meters_to_feet_conversion_factor)**(0.61) * (fuselage_wetted_area_3 * square_meters_to_square_feet_conversion_factor)**(0.25) * pound_to_kilo_conversion_factor #kg
                 landing_gear_mass_3 = 40 * (class_I_maximum_take_off_mass[i]/1000.0)**(0.47) * number_of_landing_gears**(0.54) * pound_to_kilo_conversion_factor #kg
                 flight_control_system_mass = 11.5 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor)/1000.0)**(0.4) * pound_to_kilo_conversion_factor #kg
                 avionics_mass = 0.0268**(class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor) * pound_to_kilo_conversion_factor #kg
                 furnishings_mass = 13 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor) / 1000)**(1.3) * pound_to_kilo_conversion_factor #kg
+                propeller_beams_mass = optimize_structure(np.max(productivty_mission_profiles[i][j][0][10]), productivty_mission_profiles[i][j][3][0][k])["mass"] * number_of_propellers #kg
 
                 #Rohit's Class II Weight Estimation (9)
                 #maximum_battery_power = max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) / 1000.0 #kW (Assuming it is the same as the propeller, should be modified)
@@ -678,8 +680,8 @@ for ñ in range(number_of_iterations):
                 #electric_motor_mass_4 = maximum_motor_power / electric_motor_power_density #kg
                 #battery_thermal_management_system_mass = 0.521 * ((1.0 - battery_efficiency)/(battery_efficiency)) * maximum_battery_power + 1.863 #kg
 
-                numerical_mass_summary = [total_fuselage_mass_1, numerical_propeller_motor_mass_1, numerical_propeller_blades_mass_1, propeller_blades_mass_3, numerical_propeller_motor_mass_3, numerical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass]
-                analytical_mass_summary = [total_fuselage_mass_1, analytical_propeller_motor_mass_1, analytical_propeller_blades_mass_1, propeller_blades_mass_3, analytical_propeller_motor_mass_3, analytical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass]
+                numerical_mass_summary = [total_fuselage_mass_1, numerical_propeller_motor_mass_1, numerical_propeller_blades_mass_1, propeller_blades_mass_3, numerical_propeller_motor_mass_3, numerical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass, propeller_beams_mass]
+                analytical_mass_summary = [total_fuselage_mass_1, analytical_propeller_motor_mass_1, analytical_propeller_blades_mass_1, propeller_blades_mass_3, analytical_propeller_motor_mass_3, analytical_motor_controller_mass, total_fuselage_mass_3, landing_gear_mass_3, flight_control_system_mass, avionics_mass, furnishings_mass, propeller_beams_mass]
                 
                 for l in range(5): #Loop through all battery change rates
                     
@@ -693,10 +695,10 @@ for ñ in range(number_of_iterations):
                     battery_mass_summary = [[analytical_battery_mass, total_analytical_battery_packs_mass], [numerical_battery_mass, total_numerical_battery_packs_mass]]
                     battery_masses.append(battery_mass_summary)
 
-                    analytical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + analytical_propeller_motor_mass_1 + analytical_propeller_blades_mass_1 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass #kg
-                    analytical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + analytical_propeller_motor_mass_3 + propeller_blades_mass_3 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass #kg
-                    numerical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + numerical_propeller_motor_mass_1 + numerical_propeller_blades_mass_1 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass #kg
-                    numerical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + numerical_propeller_motor_mass_3 + propeller_blades_mass_3 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass #kg
+                    analytical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + analytical_propeller_motor_mass_1 + analytical_propeller_blades_mass_1 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass + propeller_beams_mass #kg
+                    analytical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + analytical_propeller_motor_mass_3 + propeller_blades_mass_3 + analytical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + analytical_battery_mass + propeller_beams_mass #kg
+                    numerical_class_II_operational_empty_mass_1 = total_fuselage_mass_1 + numerical_propeller_motor_mass_1 + numerical_propeller_blades_mass_1 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass + propeller_beams_mass #kg
+                    numerical_class_II_operational_empty_mass_3 = total_fuselage_mass_3 + numerical_propeller_motor_mass_3 + propeller_blades_mass_3 + numerical_motor_controller_mass + landing_gear_mass_3 + flight_control_system_mass + avionics_mass + furnishings_mass + numerical_battery_mass + propeller_beams_mass #kg
                 
                     analytical_class_II_maximum_take_off_mass_1 = analytical_class_II_operational_empty_mass_1 + payload_mass[i] #kg
                     analytical_class_II_maximum_take_off_mass_3 = analytical_class_II_operational_empty_mass_3 + payload_mass[i] #kg
@@ -743,23 +745,27 @@ for ñ in range(number_of_iterations):
     print("avionics", productivty_mission_profiles[2][3][3][6][49][2][9])
     print("furnishings", productivty_mission_profiles[2][3][3][6][49][2][10])
     print("single battery mass", productivty_mission_profiles[2][3][3][6][49][0][1][0][0])
+    print("Beams mass", productivty_mission_profiles[2][3][3][6][49][2][11])
+    print("propeller diameter", productivty_mission_profiles[2][3][0][49])
+
 
     print("Class II OEM")
 
     print("mission 2")
-    print(productivty_mission_profiles[2][3][3][6][49][3][1][0][0])
-    #print(productivty_mission_profiles[2][3][3][6][49][3][1][0][1])
+    print("Method 1", productivty_mission_profiles[2][3][3][6][49][3][1][0][0])
+    print("Method 3", productivty_mission_profiles[2][3][3][6][49][3][1][0][1])
 
     print("Class II MTM")
 
     print("mission 2")
-    print(productivty_mission_profiles[2][3][3][6][49][3][1][0][2])
-    #print(productivty_mission_profiles[2][3][3][6][49][3][1][0][3])
+    print("Method 1", productivty_mission_profiles[2][3][3][6][49][3][1][0][2])
+    print("Method 3", productivty_mission_profiles[2][3][3][6][49][3][1][0][3])
 
-    print("productivity ratio", productivty_mission_profiles[2][3][3][6][49][3][1][0][6])
+    print("productivity ratio 1", productivty_mission_profiles[2][3][3][6][49][3][1][0][6])
+    print("productivity ratio 3", productivty_mission_profiles[2][3][3][6][49][3][1][0][7])
     print("Iteration completed \n")
 
-print(class_II_maximum_take_off_mass_evolution)
+#print(class_II_maximum_take_off_mass_evolution)
 
 mass_list = []
 for j in range(len(class_II_maximum_take_off_mass_evolution)):
