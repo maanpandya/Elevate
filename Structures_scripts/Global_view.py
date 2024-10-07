@@ -41,12 +41,15 @@ bearing_thickness = 2*depth_of_contact  # [m]
 
 # This will determine the thread engagement ratio: length of thread engagement=thread_engagement_ratio*diameter_thread
 
-Material_bolt = "Aluminium" # Steel or Aluminium (it is assumed that the lug is made of steel)
+Material_bolt = "Steel" # Steel or Aluminium (it is assumed that the lug is made of steel)
 if Material_bolt == "Steel":
     thread_engagement_ratio = 1
+    density_bolt=8000 # [kg/m^3]
 elif Material_bolt == "Aluminium":
     thread_engagement_ratio = 2
-
+    density_aluminium= 2780 # [kg/m^3]
+density_aluminium= 2780 # [kg/m^3]
+density_steel= 8000 # [kg/m^3]
 # Calculate the pitch of the thread
 screw_thread_pitch=0.007 # [m]
 pitch_circle_diameter_thread=diameter_pin-0.64952*screw_thread_pitch # [m]
@@ -198,3 +201,14 @@ bearing_safety_factor = calculate_bearing_failure(diameter_pin, lug_thickness)
 #FoS_tensile_bolt=calculate_bolt_thread_safety(thrust, A_t)
 #L_thread_engagement=calculate_Length_Thread_Engagement(A_t, pitch_circle_diameter_thread)
 #print(f"According to a rule of thumb, the thread engagement should be at least {thread_engagement_ratio} times the diameter of the bolt, depending on the material which is {thread_engagement_ratio*diameter_pin:.2f} m")
+
+#Weight Calculation
+def total_weight(density_hinge, density_bolt, beam_length, sleeve_height, lug_thickness, bolt_head_height, nut_height, bearing_thickness, diameter_pin, thread_height):
+    volume_pin=np.pi*(diameter_pin/2)**2*(2 * lug_thickness + sleeve_height + bolt_head_height + nut_height)
+    volume_lug= lug_thickness*lug_width
+    volume_bearing= bearing_thickness*diameter_pin
+    volume_sleeve= sleeve_height*center_lug_hole
+    weight= density_hinge*(volume_lug+volume_bearing+volume_sleeve)
+    weight+= density_bolt*(volume_pin)
+    return weight
+print(f"The total weight of the structure is: {total_weight(density_aluminium, density_bolt, beam_length, sleeve_height, lug_thickness, bolt_head_height, nut_height, bearing_thickness, diameter_pin, thread_height):.2f} N")
