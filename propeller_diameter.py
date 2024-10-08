@@ -8,7 +8,7 @@ import numpy as np
 def diamgenerator(config, N_blades, D_hub, Cr_blade, W_arm, W_pin, H_pin, H_prop):
     W_max_flight = 8.5 - 2 * 0.5
     W_fuselage = 1.2
-    W_max = 2.6
+    W_max = 2.4
     H_max = 4.1
     L_max = 8.53 #14.63 for a semi-truck (https://ops.fhwa.dot.gov/freight/publications/size_regs_final_rpt/).
 
