@@ -82,6 +82,7 @@ def design(D, T_hv, V):
 
     P_c = J1*zeta + J2*zeta**2
     P=P_c*rho*V**3*np.pi*R**2/2
+    cl_mean=np.mean(cl)
     #print(P)
     #prop_efficiency = T_c / P_c
     #print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
@@ -90,12 +91,12 @@ def design(D, T_hv, V):
     #plt.show()
     print(c)
     print(beta)
-    return r, c, beta, phi, Re, omega, P
+    return r, c, beta, phi, Re, omega, P, cl_mean
 
 def powers(D, T_hv, lst):
-    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv, 0.001)
+    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv, cl_mean = design(D, T_hv, 0.001)
 
-    powers = [r, c, beta, P_hv]
+    powers = [r, c, beta, cl_mean, P_hv]
 
     #print(P_hv)
     nr_sect=np.size(r)
@@ -265,11 +266,12 @@ def powers(D, T_hv, lst):
             #print(T)
             #print()
             omega*=np.sqrt(T_conv/T)
-        powers.append([P, blade_drag])
+        cl_mean=np.mean(C_l)
+        powers.append([P, blade_drag, cl_mean])
 
     return powers
 
-print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
+#print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
 
-#print(design(3, 1100, 3.47))
+print(design(1.877, 499, 0.001))
 

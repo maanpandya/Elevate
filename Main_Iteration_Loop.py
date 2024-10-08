@@ -245,10 +245,12 @@ for n in range(len(productivty_mission_profiles)): #Loop over each payload combi
                 power_values = []
 
                 #Hover Power 
-                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
+                hover_thrust_coefficient = np.full(productivty_mission_profiles[n][j][g][7].shape, loaded_cruise_total_thrust[n]) / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)/number_of_propellers
                 induced_hover_power_coefficient = (hover_correction_factor * (hover_thrust_coefficient**(1.5))) / (np.sqrt(2.0))
                 profile_power_coefficient = (rotor_solidity * blade_profile_drag_coefficient) / 8.0
                 hover_power = (induced_hover_power_coefficient + profile_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity * blade_tip_velocity * blade_tip_velocity #W
+                #print(hover_power[0])
+                print()
                 power_values.append(hover_power)
 
                 #Climb and descent power
@@ -265,7 +267,7 @@ for n in range(len(productivty_mission_profiles)): #Loop over each payload combi
                 power_values.append(descent_power)
 
                 #Cruise power
-                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)
+                cruise_thrust_coefficient = productivty_mission_profiles[n][j][g][10] / (air_density * productivty_mission_profiles[n][j][3][0][l] * blade_tip_velocity * blade_tip_velocity)/number_of_propellers
                 cruise_induced_velocity = np.sqrt(-0.5 * productivty_mission_profiles[n][j][2] * productivty_mission_profiles[n][j][2] + 0.5 * np.sqrt(productivty_mission_profiles[n][j][2]**4 + 4.0 * (productivty_mission_profiles[n][j][g][10] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers))**2)) #m/s
                 cruise_induced_velocity_inflow_factor = cruise_induced_velocity / blade_tip_velocity
                 cruise_advance_ratio = productivty_mission_profiles[n][j][2] / blade_tip_velocity
@@ -274,6 +276,7 @@ for n in range(len(productivty_mission_profiles)): #Loop over each payload combi
                 cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
                 cruise_power = (induced_cruise_power_coefficient + cruise_profile_power_coefficient + cruise_parasitic_drag_power_coefficient) * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
                 power_values.append(cruise_power)
+                print(cruise_power[0])
                 
                 propeller_specific_power_values.append(power_values)
             mission_velocity_specific_power_values.append(propeller_specific_power_values)
