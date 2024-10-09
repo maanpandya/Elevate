@@ -7,7 +7,7 @@ import pickle
 start_time = time.time()
 
 # Global Inputs
-g=9.80065
+g=9.81
 rho = 1.225
 dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
@@ -82,20 +82,21 @@ def design(D, T_hv, V):
 
     P_c = J1*zeta + J2*zeta**2
     P=P_c*rho*V**3*np.pi*R**2/2
+    cl_mean=np.mean(cl)
     #print(P)
     #prop_efficiency = T_c / P_c
     #print('Final Design:\nr;', r,'\nbetas;', beta, '\nChords;', c, '\nEfficiency;', prop_efficiency)
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
-    #print(c)
-    #print(beta)
-    return r, c, beta, phi, Re, omega, P
+    print(c)
+    print(beta)
+    return r, c, beta, phi, Re, omega, P, cl_mean
 
 def powers(D, T_hv, lst):
-    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv = design(D, T_hv, 0.001)
+    r, c, beta, phi_hv, Re_hv, omega_hv, P_hv, cl_mean = design(D, T_hv, 0.001)
 
-    powers = [r, c, beta, P_hv]
+    powers = [r, c, beta, cl_mean, P_hv]
 
     #print(P_hv)
     nr_sect=np.size(r)
@@ -167,9 +168,9 @@ def powers(D, T_hv, lst):
             C_T_prime[-1] = C_T_prime[-2]
             C_P_prime[-1] = C_P_prime[-2]
 
-            #plt.plot(xi, C_l)
-            #plt.title(f'baseline, omega={omega}')
-            #plt.show()
+            plt.plot(xi, C_l)
+            plt.title(f'baseline, omega={omega}')
+            plt.show()
 
             C_T = np.trapz(C_T_prime, x=xi)
             C_P = np.trapz(C_P_prime, x=xi)
@@ -238,7 +239,7 @@ def powers(D, T_hv, lst):
                 C_P_prime[-1] = C_P_prime[-2]
                 H_prime=0.5*rho*W**2*B*c*C_x
 
-                #plt.plot(xi, a_prime)
+                plt.plot(xi, a_prime)
 
 
                 C_T=np.trapz(C_T_prime, x=xi)
@@ -252,24 +253,26 @@ def powers(D, T_hv, lst):
 
                 #plt.plot(xi, phi)
 
-            #plt.title(f'psi={psi}')
-            #plt.show()
+            plt.title(f'psi={psi}')
+            plt.show()
             #print(C_P_prime)
             #print(f'P: {P}')
             #print(f'T: {T}')
             #print(f'blade_drag: {blade_drag}')
-            #print()
+            print()
             #plt.title(f'omega={omega}, psi={psi}')
             #plt.show()
             #print(P)
             #print(T)
             #print()
             omega*=np.sqrt(T_conv/T)
-        powers.append([P, blade_drag])
+        cl_mean=np.mean(C_l)
+        powers.append([P, blade_drag, cl_mean])
 
     return powers
 
 #print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
 
-#print(design(3, 1100, 3.47))
+print(design(1.877, 499, 0.001))
+
 
