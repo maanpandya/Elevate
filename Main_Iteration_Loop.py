@@ -168,8 +168,8 @@ for ñ in range(number_of_iterations):
 
         productivty_mission_profiles.append(payload_specific_productivity_mission_profile)
 
-    loaded_cruise_time = productivty_mission_profiles[2][3][0][0][len(productivty_mission_profiles[2][3][0][7]):len(productivty_mission_profiles[2][3][0][7])+len(productivty_mission_profiles[2][3][0][10])] #s
-    unloaded_cruise_time = productivty_mission_profiles[2][3][0][0][len(productivty_mission_profiles[2][3][1][7]):len(productivty_mission_profiles[2][3][1][7])+len(productivty_mission_profiles[2][3][1][10])] #s
+    loaded_cruise_time = productivty_mission_profiles[51][7][0][0][len(productivty_mission_profiles[51][7][0][7]):len(productivty_mission_profiles[51][7][0][7])+len(productivty_mission_profiles[51][7][0][10])] #s
+    unloaded_cruise_time = productivty_mission_profiles[51][7][0][0][len(productivty_mission_profiles[51][7][1][7]):len(productivty_mission_profiles[51][7][1][7])+len(productivty_mission_profiles[51][7][1][10])] #s
 
     if plot_sample_productivity_mission_profile:
 
@@ -178,8 +178,8 @@ for ñ in range(number_of_iterations):
         fig.tight_layout(pad=3.0)
 
         # Subplot 1: Altitude vs Time
-        axes[0, 0].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][1], label="Loaded") 
-        axes[0, 0].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][1], label="Unloaded") 
+        axes[0, 0].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][1], label="Loaded") 
+        axes[0, 0].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][1], label="Unloaded") 
         axes[0, 0].set_title('Altitude vs Time')  
         axes[0, 0].set_xlabel('Time (s)')  
         axes[0, 0].set_ylabel('Altitude (m)') 
@@ -187,8 +187,8 @@ for ñ in range(number_of_iterations):
         axes[0, 0].grid(True)
 
         # Subplot 2: Velocity vs Time
-        axes[0, 1].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][2], label="Loaded") 
-        axes[0, 1].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][2], label="Unloaded") 
+        axes[0, 1].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][2], label="Loaded") 
+        axes[0, 1].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][2], label="Unloaded") 
         axes[0, 1].set_title('Velocity vs Time')  
         axes[0, 1].set_xlabel('Time (s)')  
         axes[0, 1].set_ylabel('Velocity (m/s)') 
@@ -196,8 +196,8 @@ for ñ in range(number_of_iterations):
         axes[0, 1].grid(True)
 
         # Subplot 3: Thrust vs Time
-        axes[0, 2].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][3], label="Loaded") 
-        axes[0, 2].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][3], label="Unloaded") 
+        axes[0, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][3], label="Loaded") 
+        axes[0, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][3], label="Unloaded") 
         axes[0, 2].set_title('Thrust vs Time')  
         axes[0, 2].set_xlabel('Time (s)')  
         axes[0, 2].set_ylabel('Thrust (N)') 
@@ -205,8 +205,8 @@ for ñ in range(number_of_iterations):
         axes[0, 2].grid(True)
 
         # Subplot 4: Altitude vs Distance
-        axes[1, 0].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][1], label="Loaded") 
-        axes[1, 0].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][1], label="Unloaded") 
+        axes[1, 0].plot(productivty_mission_profiles[51][7][0][5], productivty_mission_profiles[51][7][0][1], label="Loaded") 
+        axes[1, 0].plot(productivty_mission_profiles[51][7][1][5], productivty_mission_profiles[51][7][1][1], label="Unloaded") 
         axes[1, 0].set_title('Altitude vs Distance')  
         axes[1, 0].set_xlabel('Distance (m)')  
         axes[1, 0].set_ylabel('Altitude (m)') 
@@ -214,8 +214,8 @@ for ñ in range(number_of_iterations):
         axes[1, 0].grid(True)
 
         # Subplot 5: Velocity vs Distance
-        axes[1, 1].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][2], label="Loaded") 
-        axes[1, 1].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][2], label="Unloaded") 
+        axes[1, 1].plot(productivty_mission_profiles[51][7][0][5], productivty_mission_profiles[51][7][0][2], label="Loaded") 
+        axes[1, 1].plot(productivty_mission_profiles[51][7][1][5], productivty_mission_profiles[51][7][1][2], label="Unloaded") 
         axes[1, 1].set_title('Velocity vs Distance')  
         axes[1, 1].set_xlabel('Distance (m)')  
         axes[1, 1].set_ylabel('Velocity (m/s)') 
@@ -223,8 +223,8 @@ for ñ in range(number_of_iterations):
         axes[1, 1].grid(True)
 
         # Subplot 6: Thrust vs Distance
-        axes[1, 2].plot(productivty_mission_profiles[2][3][0][5], productivty_mission_profiles[2][3][0][3], label="Loaded") 
-        axes[1, 2].plot(productivty_mission_profiles[2][3][1][5], productivty_mission_profiles[2][3][1][3], label="Unloaded") 
+        axes[1, 2].plot(productivty_mission_profiles[51][7][0][5], productivty_mission_profiles[51][7][0][3], label="Loaded") 
+        axes[1, 2].plot(productivty_mission_profiles[51][7][1][5], productivty_mission_profiles[51][7][1][3], label="Unloaded") 
         axes[1, 2].set_title('Thrust vs Distance')  
         axes[1, 2].set_xlabel('Distance (m)')  
         axes[1, 2].set_ylabel('Thrust (N)') 
@@ -232,8 +232,8 @@ for ñ in range(number_of_iterations):
         axes[1, 2].grid(True)
 
         # Subplot 7: Angle of Attack vs Time
-        axes[2, 0].plot(loaded_cruise_time, np.degrees(productivty_mission_profiles[2][3][0][11]), label="Loaded") 
-        axes[2, 0].plot(unloaded_cruise_time, np.degrees(productivty_mission_profiles[2][3][1][11]), label="Unloaded") 
+        axes[2, 0].plot(loaded_cruise_time, np.degrees(productivty_mission_profiles[51][7][0][11]), label="Loaded") 
+        axes[2, 0].plot(unloaded_cruise_time, np.degrees(productivty_mission_profiles[51][7][1][11]), label="Unloaded") 
         axes[2, 0].set_title('Angle of Attack vs Time')  
         axes[2, 0].set_xlabel('Time (s)')  
         axes[2, 0].set_ylabel('Angle of attack (deg)') 
@@ -241,8 +241,8 @@ for ñ in range(number_of_iterations):
         axes[2, 0].grid(True)
 
         # Subplot 8: Total Thrust vs Time
-        axes[2, 1].plot(productivty_mission_profiles[2][3][0][0], np.hstack((productivty_mission_profiles[2][3][0][7], productivty_mission_profiles[2][3][0][10], productivty_mission_profiles[2][3][0][12])), label="Loaded") 
-        axes[2, 1].plot(productivty_mission_profiles[2][3][1][0], np.hstack((productivty_mission_profiles[2][3][1][7], productivty_mission_profiles[2][3][1][10], productivty_mission_profiles[2][3][1][12])), label="Unloaded") 
+        axes[2, 1].plot(productivty_mission_profiles[51][7][0][0], np.hstack((productivty_mission_profiles[51][7][0][7], productivty_mission_profiles[51][7][0][10], productivty_mission_profiles[51][7][0][12])), label="Loaded") 
+        axes[2, 1].plot(productivty_mission_profiles[51][7][1][0], np.hstack((productivty_mission_profiles[51][7][1][7], productivty_mission_profiles[51][7][1][10], productivty_mission_profiles[51][7][1][12])), label="Unloaded") 
         axes[2, 1].set_title('Total Thrust vs Time')  
         axes[2, 1].set_xlabel('Time (s)')  
         axes[2, 1].set_ylabel('Total Thrust (N)') 
@@ -250,8 +250,8 @@ for ñ in range(number_of_iterations):
         axes[2, 1].grid(True)
 
         # Subplot 9: Power vs Time
-        axes[2, 2].plot(productivty_mission_profiles[2][3][0][0], productivty_mission_profiles[2][3][0][4], label="Loaded") 
-        axes[2, 2].plot(productivty_mission_profiles[2][3][1][0], productivty_mission_profiles[2][3][1][4], label="Unloaded") 
+        axes[2, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][4], label="Loaded") 
+        axes[2, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][4], label="Unloaded") 
         axes[2, 2].set_title('Power vs Time')  
         axes[2, 2].set_xlabel('Time (s)')  
         axes[2, 2].set_ylabel('Power (W)') 
@@ -501,6 +501,11 @@ for ñ in range(number_of_iterations):
                     loaded_cruise_time = loaded_cruise_time_array[-1] - loaded_cruise_time_array[0] #s
                     unloaded_cruise_time = unloaded_cruise_time_array[-1] - unloaded_cruise_time_array[0] #s
 
+                    #if p == 51 and t == 7 and k == 27 and m == 4: 
+                    #    print(loaded_climb_time)
+                    #    print(unloaded_climb_time)
+                    #    print(loaded_cruise_time)
+                    #    print(unloaded_cruise_time)
                     #Mission loop
                     while mission_time < (90 * 60):  #Mission requirement
 
@@ -527,6 +532,10 @@ for ñ in range(number_of_iterations):
 
                                 else:  # We exceed even without replacing the last battery, hence the last run cannot fit, do not update mission time
                                     last_flight_battery_state = "on its last flight before replacement."
+                                    
+                                    if flight_type_identifier % 2 == 0:  # Even identifier means loaded flight
+                                        loaded_flight_counter = loaded_flight_counter - 1
+                                    
                                     break
 
                         else:  # Not needed to change the battery yet in this loop
@@ -539,6 +548,10 @@ for ñ in range(number_of_iterations):
 
                             else:  # Maximum mission time requirement is exceeded with latest run hence mission time is not updated and loop broken
                                 last_flight_battery_state = "on an intermediate flight."
+                                
+                                if flight_type_identifier % 2 == 0:  # Even identifier means loaded flight
+                                    loaded_flight_counter = loaded_flight_counter - 1
+
                                 break
 
                     if (flight_type_identifier - 1) % 2 == 0:
@@ -565,13 +578,6 @@ for ñ in range(number_of_iterations):
                     #print("A total of " + str(mission_cruise_time) + "s is spent cruising or " + str(round((mission_cruise_time / mission_time) * 100, 2)) + "% of the total mission")
                     #print("In total " + str(flight_type_identifier - 1) + " flights are flown, with " + str(loaded_flight_counter) + " of those being loaded. A total of " + str(loaded_flight_counter * payload_mass) + " kg of payload is transported overall.")
                     #print("Finally, " + str(battery_change_times) + " battery packs are needed.")
-
-                    #These are the energy values actually contained in the battery, since it is changed per as many runs as previously defined
-                    #run_hover_energy = hover_power_values * loiter_hover_time #J
-                    #run_climb_energy = vertical_climb_power_values * (climb_time * single_charge_flight_number) #J
-                    #run_descent_energy = vertical_descent_climb_power_values * (climb_time * single_charge_flight_number) #J
-                    #run_cruise_energy = cruise_power_values * (cruise_time * single_charge_flight_number) #J
-                    #total_run_energy = run_cruise_energy + run_descent_energy + run_climb_energy + run_hover_energy #J (This is the energy stored in one battery)
 
     #-------------------Productivity Mission Energy Calculation-----------------------#
 
@@ -774,14 +780,16 @@ for ñ in range(number_of_iterations):
 
     if ñ == number_of_iterations-1:
         maximum_overall_productivity_ratio_index = selected_OEM_productivity_ratio.index(max(selected_OEM_productivity_ratio))
-        print(maximum_overall_productivity_ratio_index)
+        
         best_overall_OEM_index = selected_OEM_indices_list[maximum_overall_productivity_ratio_index]
         index1 = maximum_overall_productivity_ratio_index
         index2 = best_overall_OEM_index
-
+        print(index1)
+        print(index2)
         print("Final configuration summary")
         print("Masses")
         print("payload", payload_mass[index1])
+        print("payload composition", payload_mass_identifier[index1])
         print("cruise velocity", cruise_velocity[index2[0]])
         print("fuselage", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][2][0])
         print("motor 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][2][1])
@@ -826,8 +834,15 @@ for ñ in range(number_of_iterations):
         print("total mission cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][4] / 60)
         print("total battery packs", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][5])
         print("flights on one battery charge", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][6])
-        print("total mission time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11] / 60)
+        print("total mission (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11] / 60)
+        print("unloaded cruise time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10] / 60)
+        print("loaded cruise time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9] / 60)
+        print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8] / 60)
+        print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7] / 60)
         
+        print("\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]])
+
+
         print("Average loaded powers")
         print("cruise", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][0])
         print("cruise (induced)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][1])

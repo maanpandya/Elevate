@@ -273,6 +273,6 @@ def powers(D, T_hv, lst):
 
 #print(powers(D=3, T_hv=923, lst=[[1100, 3.47, 20]]))
 
-print(design(1.877, 499, 0.001))
+#print(design(1.877, 499, 0.001))
 
 
