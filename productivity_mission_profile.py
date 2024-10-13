@@ -74,65 +74,75 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             velocity[i] = acceleration * t
             altitude[i] = 0.5 * acceleration * t**2
             acc = acceleration
-            thrust_climb.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_climb.append(T)
             velocity_climb.append(velocity[i])
         elif t <= t_acc_climb + t_cons_climb:  # Constant velocity climb
             velocity[i] = climb_velocity
             altitude[i] = 0.5 * acceleration * t_acc_climb**2 + climb_velocity * (t - t_acc_climb)
             acc = 0
-            thrust_climb.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_climb.append(T)
             velocity_climb.append(velocity[i])
         elif t <= t_climb_end:  # Climb deceleration
             t_local = t - (t_acc_climb + t_cons_climb)
             velocity[i] = climb_velocity - deceleration * t_local
             altitude[i] = climb_altitude - 0.5 * deceleration * t_local**2
             acc = -deceleration
-            thrust_climb.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_climb.append(T)
             velocity_climb.append(velocity[i])
         elif t <= t_cruise_start + t_acc_cruise:  # Cruise acceleration
             t_local = t - t_cruise_start
             velocity[i] = acceleration * t_local
             altitude[i] = climb_altitude
             acc = acceleration
-            thrust_cruise.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_cruise.append(T)
             velocity_cruise.append(velocity[i])
         elif t <= t_cruise_start + t_acc_cruise + t_cons_cruise:  # Constant cruise
             velocity[i] = cruise_velocity
             altitude[i] = climb_altitude
             acc = 0
-            thrust_cruise.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_cruise.append(T)
             velocity_cruise.append(velocity[i])
         elif t <= t_cruise_end:  # Cruise deceleration
             t_local = t - (t_cruise_start + t_acc_cruise + t_cons_cruise)
             velocity[i] = cruise_velocity - deceleration * t_local
             altitude[i] = climb_altitude
             acc = -deceleration
-            thrust_cruise.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+            thrust_cruise.append(T)
             velocity_cruise.append(velocity[i])
         elif t <= t_descent_start + t_acc_descent:  # Descent acceleration
             t_local = t - t_descent_start
             velocity[i] = -acceleration * t_local
             altitude[i] = climb_altitude - 0.5 * acceleration * t_local**2
             acc = -acceleration
-            thrust_descent.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
+            thrust_descent.append(T)
             velocity_descent.append(abs(velocity[i]))
         elif t <= t_descent_start + t_acc_descent + t_cons_descent:  # Constant descent
             velocity[i] = -descent_velocity
             altitude[i] = climb_altitude - (0.5 * acceleration * t_acc_descent**2 + 
                                             descent_velocity * (t - t_descent_start - t_acc_descent))
             acc = 0
-            thrust_descent.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
+            thrust_descent.append(T)
             velocity_descent.append(abs(velocity[i]))
         else:  # Descent deceleration
             t_local = t - (t_descent_start + t_acc_descent + t_cons_descent)
             velocity[i] = -descent_velocity + deceleration * t_local
             altitude[i] = max(0, descent_altitude - (descent_velocity * t_local - 0.5 * deceleration * t_local**2))
             acc = deceleration
-            thrust_descent.append(thrust[i])
+            T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
+            thrust_descent.append(T)
             velocity_descent.append(abs(velocity[i]))
 
         thrust[i], power[i] = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
         vertical_distance[i] = altitude[i]
+        
 
         if t <= t_climb_end:
             horizontal_distance[i] = 0
@@ -202,7 +212,6 @@ def plot_results(time, altitude, velocity, thrust, power, horizontal_distance, v
     
     plt.tight_layout()
     plt.show()
-
 
 
 
