@@ -41,7 +41,7 @@ propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
 
-plot_sample_productivity_mission_profile = False
+plot_sample_productivity_mission_profile = True
 plot_sample_analytical_power_curve = False
 plot_sample_analytical_mission_power_curve = False
 
@@ -114,6 +114,7 @@ for ñ in range(number_of_iterations):
     #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
     cruise_velocity = np.arange(5, 65, 5) #m/s 
+    climb_velocity = 2.5 #m/s
     cruise_height = 300 #m (Design choice, could be bound by regulations)
     max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
     mission_distance = 3000.0 #m
@@ -130,15 +131,15 @@ for ñ in range(number_of_iterations):
         for k in range(len(cruise_velocity)):
 
             #Loaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
 
-            #if h == 2 and k == 3:
-                #print(thrust_cruise_vertical[0:2])
-                #print(thrust_cruise_horizontal[0:2])
-                #print(thrust_cruise[0:2])
+            if h == 51 and k == 7:
+                print(thrust_cruise_vertical[0:2])
+                print(thrust_cruise_horizontal)
+                print(thrust_cruise[0:2])
 
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
             rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
@@ -147,7 +148,7 @@ for ñ in range(number_of_iterations):
             loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
             
             #Unloaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], cruise_velocity[k], cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
