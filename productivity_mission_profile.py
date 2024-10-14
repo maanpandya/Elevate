@@ -47,7 +47,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
      total_time, v_const_climb, v_cons_cruise, v_cons_descent) = mission_profile(
         climb_velocity, cruise_velocity, descent_velocity, climb_altitude, cruise_distance, descent_altitude, acceleration, deceleration)
     
-    time = np.linspace(0, total_time, 10000)
+    time = np.linspace(0, total_time, 5000)
     altitude = np.zeros_like(time)
     velocity = np.zeros_like(time)
     thrust = np.zeros_like(time)
@@ -141,6 +141,9 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             thrust_descent.append(T)
             velocity_descent.append(abs(velocity[i]))
 
+        for i in range(len(time)):
+            thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
+
         if t <= t_climb_end:
             horizontal_distance[i] = 0
         elif t <= t_cruise_end:
@@ -209,4 +212,3 @@ def plot_results(time, altitude, velocity, thrust, power, horizontal_distance, v
     
     plt.tight_layout()
     plt.show()
-
