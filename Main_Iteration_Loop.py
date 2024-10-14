@@ -42,8 +42,8 @@ propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
 
 plot_sample_productivity_mission_profile = True
-plot_sample_analytical_power_curve = False
-plot_sample_analytical_mission_power_curve = False
+plot_sample_analytical_power_curve = True
+plot_sample_analytical_mission_power_curve = True
 
 #----------------------------------------------------------------------------#
 #                      CLASS I WEIGHT ESTIMATION                             #
@@ -88,10 +88,10 @@ for ñ in range(number_of_iterations):
     loaded_cruise_total_thrust = class_I_maximum_take_off_mass * g #N (Vertical thrust component for L=W)
     unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical thrust component for L=W)
     
-    #print("starting iteration OEM", class_I_operational_empty_mass[2])
-    #print("starting iteration MTM", class_I_maximum_take_off_mass[2])
-    #print("starting loaded thrust", loaded_cruise_total_thrust[2])
-    #print("starting unloaded thrust", unloaded_cruise_total_thrust[2])
+    print("starting iteration OEM", class_I_operational_empty_mass[51])
+    print("starting iteration MTM", class_I_maximum_take_off_mass[51])
+    print("starting loaded thrust", loaded_cruise_total_thrust[51])
+    print("starting unloaded thrust", unloaded_cruise_total_thrust[51])
 
     #-------------------------Rotor Sizing----------------------------#
 
@@ -114,7 +114,7 @@ for ñ in range(number_of_iterations):
     #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
     cruise_velocity = np.arange(5, 65, 5) #m/s 
-    climb_velocity = 2.5 #m/s
+    climb_velocity = 10.0 #m/s
     cruise_height = 300 #m (Design choice, could be bound by regulations)
     max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
     mission_distance = 3000.0 #m
@@ -136,10 +136,12 @@ for ñ in range(number_of_iterations):
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
 
-            if h == 51 and k == 7:
-                print(thrust_cruise_vertical[0:2])
-                print(thrust_cruise_horizontal)
-                print(thrust_cruise[0:2])
+            #if h == 51 and k == 7:
+            #    print(thrust_climb)
+            #     print(velocity)
+            #    print(thrust_cruise_vertical[0:2])
+            #    print(thrust_cruise_horizontal[0:2])
+            #    print(thrust_cruise[0:2])
 
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
             rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
@@ -172,7 +174,10 @@ for ñ in range(number_of_iterations):
     loaded_cruise_time = productivty_mission_profiles[51][7][0][0][len(productivty_mission_profiles[51][7][0][7]):len(productivty_mission_profiles[51][7][0][7])+len(productivty_mission_profiles[51][7][0][10])] #s
     unloaded_cruise_time = productivty_mission_profiles[51][7][0][0][len(productivty_mission_profiles[51][7][1][7]):len(productivty_mission_profiles[51][7][1][7])+len(productivty_mission_profiles[51][7][1][10])] #s
 
-    if plot_sample_productivity_mission_profile:
+
+    #print(np.hstack((productivty_mission_profiles[51][7][0][7], productivty_mission_profiles[51][7][0][10], productivty_mission_profiles[51][7][0][12])))
+
+    if plot_sample_productivity_mission_profile and ñ==number_of_iterations-1:
 
         fig, axes = plt.subplots(3, 3, figsize=(12, 6)) 
 
@@ -267,8 +272,8 @@ for ñ in range(number_of_iterations):
 
     #--------------------Analytical Rotor Power Estimation------------------------#
 
-    vertical_climb_speed = 2.5 #m/s (Literature but can be variable too)
-    vertical_descent_speed = -2.5 #m/s (Literature but can be variable too)
+    vertical_climb_speed = climb_velocity #m/s (Literature but can be variable too)
+    vertical_descent_speed = -climb_velocity #m/s (Literature but can be variable too)
     rotor_solidity = 0.065 #(running variable between 0.05-0.08, or obtained from Tamas)
     blade_profile_drag_coefficient = 0.01 #Literature (basic helicopter aerodynamics by Seddon)
     hover_correction_factor = 1.15 #Literature (basic helicopter aerodynamics by Seddon)
@@ -312,7 +317,7 @@ for ñ in range(number_of_iterations):
                 
 
                     #Climb and descent power
-                    thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(productivty_mission_profiles[n][j][p][7] / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)) #m/s
+                    thrust_equivalent_vertical_flight_induced_velocity = np.sqrt(np.full(productivty_mission_profiles[n][j][p][7].shape, loaded_cruise_total_thrust[n]) / (2.0 * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)) #m/s
                     climb_power = hover_power * ((vertical_climb_speed / (2.0 * thrust_equivalent_vertical_flight_induced_velocity)) + np.sqrt((vertical_climb_speed / (2 * thrust_equivalent_vertical_flight_induced_velocity))**2 + 1)) #W
                     descent_power = hover_power #W
 
@@ -412,7 +417,18 @@ for ñ in range(number_of_iterations):
 
     #print(productivty_mission_profiles[2][3][3][3][49][1][4])
 
-    if plot_sample_analytical_mission_power_curve:
+    """
+    print("Climb thrust")
+    print(productivty_mission_profiles[2][3][1][7])
+    print("Climb power")
+    print(productivty_mission_profiles[2][3][3][3][49][1][1])
+    print("Cruise power")
+    print(productivty_mission_profiles[2][3][3][3][49][1][3])
+    print("Descent power")
+    print(productivty_mission_profiles[2][3][3][3][49][1][2])
+    """
+
+    if plot_sample_analytical_mission_power_curve and ñ==number_of_iterations-1:
 
         time = productivty_mission_profiles[2][3][0][0]
         power_profile = np.concatenate((productivty_mission_profiles[2][3][3][3][49][1][1], productivty_mission_profiles[2][3][3][3][49][1][3], productivty_mission_profiles[2][3][3][3][49][1][2]))
@@ -422,7 +438,7 @@ for ñ in range(number_of_iterations):
         plt.ylabel("Power (W)")
         plt.show()
 
-    if plot_sample_analytical_power_curve:
+    if plot_sample_analytical_power_curve and ñ==number_of_iterations-1:
         cruise_velocity_list = []
         cruise_power_list = []
         cruise_induced_power_list = []
@@ -747,7 +763,7 @@ for ñ in range(number_of_iterations):
     #----------------------------------------------------------------------------#
     #             OPTIMAL ITERATION & FINAL CONFIGURATION SELECTION              #
     #----------------------------------------------------------------------------#
-  
+
     selected_OEM_list = [] #Contains as many weights as payload options, the OEM with the highest productivity ratio for each payload option is chosen
     selected_OEM_indices_list = [] #Contains the indices to the corresponding best OEM
     selected_OEM_productivity_ratio = [] #Contains corresponding productivity ratios for each best OEM
@@ -777,14 +793,91 @@ for ñ in range(number_of_iterations):
     class_II_operational_empty_mass_list = np.array(selected_OEM_list)
     class_II_maximum_take_off_mass_evolution.append(np.array(class_II_operational_empty_mass_list))
 
-    print("Iteration " + str(ñ) + " complete.")
+    print("Iteration " + str(ñ+1) + " complete.")
 
     if ñ == number_of_iterations-1:
+
+        #Obtain the index of the best design
         maximum_overall_productivity_ratio_index = selected_OEM_productivity_ratio.index(max(selected_OEM_productivity_ratio))
-        
         best_overall_OEM_index = selected_OEM_indices_list[maximum_overall_productivity_ratio_index]
         index1 = maximum_overall_productivity_ratio_index
         index2 = best_overall_OEM_index
+
+
+        #Productivity ratio variance investigation
+        all_productivity_ratio_list = []
+        battery_specific_productivity_ratio_list = []
+
+        if ñ == number_of_iterations-1:
+            for i in range(len(productivty_mission_profiles)): #Loop through all payload combinations
+                for j in range(len(productivty_mission_profiles[i])): #Loop through all cruise velocities for 1 payload combination
+                    for k in range(len(productivty_mission_profiles[i][j][3][0])): #Loop through all propeller sizes for 1 payload and 1 cruise velocity combination
+                        for l in range(5): #Loop through all battery change rates
+                            productivity_ratio = productivty_mission_profiles[i][j][3][6][k][3][l][0][7]
+                            if i == index1 and j == index2[0] and k == index2[1]:
+                                battery_productivity_ratio = productivty_mission_profiles[i][j][3][6][k][3][l][0][7]
+                                battery_specific_productivity_ratio_list.append(battery_productivity_ratio)
+                            all_productivity_ratio_list.append(productivity_ratio)
+
+        print("The maximum overall productivity ratio is " + str(max(all_productivity_ratio_list)))
+       
+        plt.plot([2, 3, 4, 5, 6], battery_specific_productivity_ratio_list)
+        plt.xlabel("Flights flown with the same battery")
+        plt.ylabel("Productivity ratio")
+        plt.title("Productivity ratio variation with battery change rate (for one configuration)")
+        plt.show()
+
+        print("Propeller diameter, productivity ratio")
+        propeller_specific_productivity_ratio_list = []
+        propeller_specific_battery_mass_list = []
+        for k in range(len(productivty_mission_profiles[index1][index2[0]][3][0])):
+            productivity_ratio = productivty_mission_profiles[index1][index2[0]][3][6][k][3][4][0][7]
+            battery_mass = productivty_mission_profiles[index1][index2[0]][3][6][k][0][4][0][0]
+            propeller_specific_productivity_ratio_list.append(productivity_ratio)
+            propeller_specific_battery_mass_list.append(battery_mass)
+            print(productivty_mission_profiles[index1][index2[0]][3][0][k], productivity_ratio)
+        
+        plt.plot(productivty_mission_profiles[index1][index2[0]][3][0], propeller_specific_productivity_ratio_list)
+        plt.plot(np.full(productivty_mission_profiles[index1][index2[0]][3][0].shape, 2.3), propeller_specific_productivity_ratio_list)
+        plt.xlabel("Propeller diameter (m^2)")
+        plt.ylabel("Productivity ratio")
+        plt.title("Productivity ratio variation with propeller diameter (for one configuration)")
+        plt.legend()
+        plt.show()
+
+        plt.plot(propeller_specific_productivity_ratio_list, propeller_specific_battery_mass_list)
+        plt.xlabel("Productivity ratio")
+        plt.ylabel("Battery mass")
+        plt.title("Battery mass variation with productivity ratio")
+        plt.show()
+
+        payload_specific_productivity_ratio_list = []
+        payload_specific_MTM_list = []
+        for i in range(len(productivty_mission_profiles)):
+            productivity_ratio = productivty_mission_profiles[i][index2[0]][3][6][-1][3][4][0][7]
+            maximum_takeoff_mass = productivty_mission_profiles[i][index2[0]][3][6][-1][3][4][0][3]
+            payload_specific_productivity_ratio_list.append(productivity_ratio)
+            payload_specific_MTM_list.append(maximum_takeoff_mass)
+
+        plt.scatter(payload_mass, payload_specific_productivity_ratio_list)
+        plt.xlabel("Payload mass (kg)")
+        plt.ylabel("Productivity ratio")
+        plt.title("Productivity ratio variation with payload mass")
+        plt.show()
+
+        plt.scatter(payload_specific_MTM_list, payload_specific_productivity_ratio_list)
+        plt.xlabel("MTM (kg)")
+        plt.ylabel("Productivity ratio")
+        plt.title("Productivity ratio variation with MTM")
+        plt.show()
+
+        plt.scatter(payload_mass, payload_specific_MTM_list)
+        plt.xlabel("Payload mass (kg)")
+        plt.ylabel("MTM (kg)")
+        plt.title("MTM variation with payload mass")
+        plt.show()
+
+        #Print all parameters relatd to the best design
         print(index1)
         print(index2)
         print("Final configuration summary")
@@ -810,6 +903,11 @@ for ñ in range(number_of_iterations):
         print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
         print("Maximum cruise thrust\n", np.max(productivty_mission_profiles[index1][3][0][10]))
 
+        print("EVTOL dimensions")
+        print("Total length", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]]*3)
+        print("Total width", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]]*3*np.cos(np.pi/6.0))
+        print("Propeller beam length", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]] / 2)
+
         print("Class II OEM")
 
         print("mission 2")
@@ -823,7 +921,7 @@ for ñ in range(number_of_iterations):
         print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][3])
 
         
-        print("productivity ratio 1", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][6])
+        print("productivity ratio 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][6])
         print("productivity ratio 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][7])
 
         print("Productivty Mission Summary")
@@ -841,7 +939,20 @@ for ñ in range(number_of_iterations):
         print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8] / 60)
         print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7] / 60)
         
-        print("\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]])
+        print("Productivity mission summary list")
+        print("Total flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][0])
+        print("Loaded flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1])
+        print("Unloaded flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][2])
+        print("Total mission climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][3])
+        print("Total mission cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][4])
+        print("Total battery packs", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][5])
+        print("Flights flown with one battery", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][6])
+        print("Loaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7])
+        print("Unloaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8])
+        print("Unloaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9])
+        print("Loaded single cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10])
+        print("Unloaded single cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11])
+        print("Total mission time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][12]/60.0)
 
 
         print("Average loaded powers")
