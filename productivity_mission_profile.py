@@ -47,7 +47,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
      total_time, v_const_climb, v_cons_cruise, v_cons_descent) = mission_profile(
         climb_velocity, cruise_velocity, descent_velocity, climb_altitude, cruise_distance, descent_altitude, acceleration, deceleration)
     
-    time = np.linspace(0, total_time, 1000)
+    time = np.linspace(0, total_time, 10000)
     altitude = np.zeros_like(time)
     velocity = np.zeros_like(time)
     thrust = np.zeros_like(time)
