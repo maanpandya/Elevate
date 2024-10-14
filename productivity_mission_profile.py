@@ -50,8 +50,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
     time = np.linspace(0, total_time, 5000)
     altitude = np.zeros_like(time)
     velocity = np.zeros_like(time)
-    thrust = np.zeros_like(time)
-    power = np.zeros_like(time)
+
     horizontal_distance = np.zeros_like(time)
     vertical_distance = np.zeros_like(time)
     
@@ -62,6 +61,9 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
     velocity_climb = []
     velocity_cruise = []
     velocity_descent = []
+    power_climb = []
+    power_cruise = []
+    power_descent = []
     
     # Time divisions for each phase
     t_climb_end = t_acc_climb + t_cons_climb + t_decel_climb
@@ -76,6 +78,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = acceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_climb.append(T)
+            power_climb.append(p)
             velocity_climb.append(velocity[i])
         elif t <= t_acc_climb + t_cons_climb:  # Constant velocity climb
             velocity[i] = climb_velocity
@@ -83,6 +86,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = 0
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_climb.append(T)
+            power_climb.append(p)
             velocity_climb.append(velocity[i])
         elif t <= t_climb_end:  # Climb deceleration
             t_local = t - (t_acc_climb + t_cons_climb)
@@ -91,6 +95,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = deceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_climb.append(T)
+            power_climb.append(p)
             velocity_climb.append(velocity[i])
         elif t <= t_cruise_start + t_acc_cruise:  # Cruise acceleration
             t_local = t - t_cruise_start
@@ -99,6 +104,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = acceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_cruise.append(T)
+            power_cruise.append(p)
             velocity_cruise.append(velocity[i])
         elif t <= t_cruise_start + t_acc_cruise + t_cons_cruise:  # Constant cruise
             velocity[i] = cruise_velocity
@@ -106,6 +112,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = 0
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_cruise.append(T)
+            power_cruise.append(p)
             velocity_cruise.append(velocity[i])
         elif t <= t_cruise_end:  # Cruise deceleration
             t_local = t - (t_cruise_start + t_acc_cruise + t_cons_cruise)
@@ -114,6 +121,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = deceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_cruise.append(T)
+            power_cruise.append(p)
             velocity_cruise.append(velocity[i])
         elif t <= t_descent_start + t_acc_descent:  # Descent acceleration
             t_local = t - t_descent_start
@@ -122,6 +130,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = acceleration
             T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
             thrust_descent.append(T)
+            power_descent.append(p)
             velocity_descent.append(abs(velocity[i]))
         elif t <= t_descent_start + t_acc_descent + t_cons_descent:  # Constant descent
             velocity[i] = descent_velocity
@@ -130,6 +139,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = 0
             T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
             thrust_descent.append(T)
+            power_descent.append(p)
             velocity_descent.append(abs(velocity[i]))
         else:  # Descent deceleration
             t_local = t - (t_descent_start + t_acc_descent + t_cons_descent)
@@ -139,10 +149,8 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             acc = deceleration
             T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
             thrust_descent.append(T)
+            power_descent.append(p)
             velocity_descent.append(abs(velocity[i]))
-
-        for i in range(len(time)):
-            thrust[i], power[i] = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
 
         if t <= t_climb_end:
             horizontal_distance[i] = 0
@@ -159,6 +167,9 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
                                           cruise_velocity * t_decel - 0.5 * deceleration * t_decel**2)
         else:
             horizontal_distance[i] = cruise_distance
+    
+    thrust = np.concatenate((thrust_climb, thrust_cruise, thrust_descent))
+    power = np.concatenate((power_climb, power_cruise, power_descent))
 
     # Convert lists to numpy arrays
     thrust_climb = np.array(thrust_climb)
@@ -167,6 +178,8 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
     velocity_climb = np.array(velocity_climb)
     velocity_cruise = np.array(velocity_cruise)
     velocity_descent = np.array(velocity_descent)
+    thrust = np.array(thrust)
+    power = np.array(power)
 
     return (time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance,
             thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent)
@@ -212,3 +225,4 @@ def plot_results(time, altitude, velocity, thrust, power, horizontal_distance, v
     
     plt.tight_layout()
     plt.show()
+
