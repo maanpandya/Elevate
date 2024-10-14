@@ -88,7 +88,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             t_local = t - (t_acc_climb + t_cons_climb)
             velocity[i] = climb_velocity - deceleration * t_local
             altitude[i] = climb_altitude - 0.5 * deceleration * t_local**2
-            acc = -deceleration
+            acc = deceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_climb.append(T)
             velocity_climb.append(velocity[i])
@@ -111,7 +111,7 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             t_local = t - (t_cruise_start + t_acc_cruise + t_cons_cruise)
             velocity[i] = cruise_velocity - deceleration * t_local
             altitude[i] = climb_altitude
-            acc = -deceleration
+            acc = deceleration
             T, p = calculate_thrust_and_power(mass, velocity[i], acc, altitude[i], rho)
             thrust_cruise.append(T)
             velocity_cruise.append(velocity[i])
@@ -140,10 +140,6 @@ def generate_data(mass, climb_velocity, cruise_velocity, descent_velocity, climb
             T, p = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
             thrust_descent.append(T)
             velocity_descent.append(abs(velocity[i]))
-
-        thrust[i], power[i] = calculate_thrust_and_power(mass, abs(velocity[i]), acc, altitude[i], rho)
-        vertical_distance[i] = altitude[i]
-        
 
         if t <= t_climb_end:
             horizontal_distance[i] = 0
