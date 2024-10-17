@@ -114,4 +114,4 @@ def make_airfoildata(airfoil, foilpath, angles, re_nrs, verify):
     with open('AirfoilData/' + foilpath + '/clcdmaxcl_func.pkl', 'wb') as file:
         pickle.dump(clcdmaxcl_func, file)
 
-#make_airfoildata('NACA 2412', 'NACA_2412', np.arange(10, 0, -0.2), np.arange(3, 8, 1), True)
+make_airfoildata('NACA 2412', 'NACA_2412', np.arange(10, 0, -0.2), np.arange(3, 8, 1), True)
