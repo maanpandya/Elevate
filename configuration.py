@@ -87,7 +87,7 @@ class Configuration:
                 phi = np.arcsin(self.Cr / Z)
                 w = Z + D_prop / np.sin(np.pi/6 + phi)
             Z -= 0.01
-            frontmargin_out = D_prop * np.sin(np.pi/6 - phi) / 2
+            frontmargin_out = D_prop * np.cos(np.pi/6 - phi) / 2
             frontmargin = D_prop * np.cos(np.pi/3) / 2
         elif self.N == 4:
             while w < self.w_max:
@@ -95,8 +95,8 @@ class Configuration:
                 phi = np.arcsin(self.Cr / Z / np.sqrt(2))
                 w = Z + D_prop * np.cos(phi + np.pi/4)
             Z -= 0.01
-            frontmargin_out = D_prop * np.cos(phi + np.pi/4)
-            frontmargin = D_prop / np.sqrt(2)
+            frontmargin_out = D_prop * np.sin(phi + np.pi/4) / 2
+            frontmargin = D_prop / np.sqrt(2) / 2
         elif self.N == 6:
             Z = self.w_max - D_prop
             frontmargin = D_prop * np.cos(np.pi / 6) / 2
@@ -120,17 +120,25 @@ class Configuration:
                         w_outerhub_prev = w_outerhub
                         l_outerhub_prev = l_outerhub
                     w_outerhub = np.sqrt(D_prop**2 - (l_centerhub - D_prop/2)**2)
-                    if D_prop < self.l_outerpin:
-                        l_outerarm = D_prop/2
-                        l_outerpin = D_prop/2
+                    l_outerarm = max(D_prop / 2, w_outerhub - self.w_fuselage / 2)
+
+                    l_outerfolded_max = frontmargin_out + D_prop/2 + np.sqrt(D_prop**2 - (self.w_fuselage - Z)**2) / 2
+                    if self.l_max/2 < l_outerfolded_max:
+                        u = self.l_max - frontmargin_out*2 - D_prop
+                        l_outerpin = D_prop/2 - ((w_outerhub*2 - self.w_fuselage)**2 - u**2 - (self.w_fuselage - Z)**2) / 2 / u
+                        l_outerpin = min(self.l_outerpin, l_outerpin)
                     else:
-                        l_outerarm = np.sqrt(D_prop**2 + (D_prop-self.l_outerpin)**2)/2
-                        l_outerpin = self.l_outerpin/2
+                        if D_prop < self.l_outerpin:
+                            l_outerpin = D_prop/2
+                        else:
+                            l_outerpin = self.l_outerpin/2
+
+                    l_outerarm = np.sqrt(l_outerarm ** 2 + ((D_prop - l_outerpin) / 2) ** 2)
 
                     l_armprev = l_arm
-                    l_arm = max(D_prop/2, l_centerhub * 2 - self.l_fuselage, l_outerarm)
+                    l_arm = max(D_prop/2, l_centerhub - self.l_fuselage/2, l_outerarm)
 
-                    l_outerhub = l_outerpin + np.sqrt(l_arm**2 - ((self.w_fuselage - Z)/2)**2)
+                    l_outerhub = min(l_outerpin, D_prop) / 2 + np.sqrt(l_arm**2 - ((self.w_fuselage - Z)/2)**2)
                     l_folded = max(l_centerhub + frontmargin, l_outerhub + frontmargin_out)
                     if l_folded*2 < self.l_max:
                         lengthok = True
@@ -139,15 +147,18 @@ class Configuration:
 
                     if (((not folding and w_outerhub * 2 + D_prop > self.w_max_flight) or
                         l_centerhub < (D_prop + self.l_fuselage) / 2)
-                        and not l_centerhub < D_prop/2 + np.sqrt(D_prop**2 - ((D_prop + self.w_fuselage)/2)**2) - 0.001):
+                        and not l_centerhub > D_prop/2 + np.sqrt(D_prop**2 - ((D_prop + self.w_fuselage)/2)**2) - 0.001):
                         widthok = False
                         l_arm = l_armprev
                         w_outerhub = w_outerhub_prev
                         l_outerhub = l_outerhub_prev
+                        l_centerhub += 0.01
 
                     l_centerhub -= 0.01
 
-                l_centerhub = l_arm + self.l_fuselage / 2
+                    if l_centerhub < 0:
+                        print('No solution!')
+                        widthok = False
 
             else:
                 smallarm = True
@@ -161,21 +172,24 @@ class Configuration:
                 l_outerpin = D_prop/2
             else:
                 l_outerpin = self.l_outerpin / 2
-            l_outerhub = l_outerpin + np.sqrt(l_arm**2 - ((self.w_fuselage - Z)/2)**2)
+            l_outerhub = min(l_outerpin, D_prop) / 2 + np.sqrt(l_arm**2 - ((self.w_fuselage - Z)/2)**2)
             l_centerhub = l_arm + self.l_fuselage / 2
-            w_outerhub = (D_prop + self.w_fuselage)/2
+            w_outerhub = (D_prop + self.w_fuselage) / 2
 
         hub_coords = [['Center_hub: (L, W)', l_centerhub, 0],
                       ['Outer_hub: (L, W)', D_prop/2, w_outerhub],
-                      ['Outer_hub_folded: (L, W)', l_outerhub, Z/2]]
+                      ['Outer_hub_folded: (L, W)', l_outerhub, Z/2],
+                      ['Pin_location: (L, W)', l_outerpin, self.w_fuselage/2]]
         l_folded = max(l_outerhub + frontmargin_out, l_centerhub + frontmargin)
         width = w_outerhub * 2 + D_prop
+        print(frontmargin_out, frontmargin, Z)
 
-        return l_arm, hub_coords, width, 2 * l_folded
+        return l_arm, width, 2 * l_folded, hub_coords
 
 
-config1 = Configuration("Hori_fold", 6, 0.3, 0.1)
-fold = True
-diameter_limit = 3
+config1 = Configuration("Hori_fold", 4, 0.3, 0.1)
+fold = True     # Limits in-flight width.
+diameter_limit = 4
 dia_max = config1.max_diam(fold)
+print(dia_max)
 print(config1.arm(min(dia_max, diameter_limit), fold))

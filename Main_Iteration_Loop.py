@@ -114,7 +114,7 @@ for ñ in range(number_of_iterations):
     #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
     cruise_velocity = np.arange(5, 65, 5) #m/s 
-    climb_velocity = 10.0 #m/s
+    climb_velocity = 5 #m/s
     cruise_height = 300 #m (Design choice, could be bound by regulations)
     max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
     mission_distance = 3000.0 #m
