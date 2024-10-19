@@ -188,7 +188,7 @@ class Configuration:
 
 
 config1 = Configuration("Hori_fold", 4, 0.3, 0.1)
-fold = True     # Limits in-flight width.
+fold = False     # Limits in-flight width.
 diameter_limit = 4
 dia_max = config1.max_diam(fold)
 print(dia_max)

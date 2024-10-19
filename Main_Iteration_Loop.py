@@ -40,6 +40,7 @@ propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
 propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
+airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
 plot_sample_productivity_mission_profile = True
 plot_sample_analytical_power_curve = True
@@ -131,34 +132,40 @@ for ñ in range(number_of_iterations):
         for k in range(len(cruise_velocity)):
 
             #Loaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_maximum_take_off_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
 
-            #if h == 51 and k == 7:
-            #    print(thrust_climb)
-            #     print(velocity)
-            #    print(thrust_cruise_vertical[0:2])
-            #    print(thrust_cruise_horizontal[0:2])
-            #    print(thrust_cruise[0:2])
-
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+            modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
 
-            loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+            #if h == 51 and k == 7:
+                #print(modified_cruise_angle_of_attack)
+                #print("normal velocity", rotor_normal_cruise_velocity)
+                #print("tangential velocity", rotor_tangential_cruise_velocity)
+                #print("climb", thrust_climb)
+                #print(velocity)
+                #print("thrust cruise vertical", thrust_cruise_vertical)
+                #print("thrust cruise horizontal", thrust_cruise_horizontal)
+                #print("cruise", thrust_cruise)
+                #print("descent", thrust_descent)
+
+            loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
             
             #Unloaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_operational_empty_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+            modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
 
-            unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+            unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
 
             #Propeller diameter range generation with previous sizing
             propeller_diameter = np.linspace(propeller_diameter_min[h], propeller_diameter_max, 50) #m
@@ -256,11 +263,11 @@ for ñ in range(number_of_iterations):
         axes[2, 1].grid(True)
 
         # Subplot 9: Power vs Time
-        axes[2, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][4], label="Loaded") 
-        axes[2, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][4], label="Unloaded") 
-        axes[2, 2].set_title('Power vs Time')  
+        axes[2, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][-1]/g, label="Loaded") 
+        axes[2, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][-1]/g, label="Unloaded") 
+        axes[2, 2].set_title('Acceleration vs Time')  
         axes[2, 2].set_xlabel('Time (s)')  
-        axes[2, 2].set_ylabel('Power (W)') 
+        axes[2, 2].set_ylabel('Acceleration (m/s^2)') 
         axes[2, 2].legend()
         axes[2, 2].grid(True)
 
@@ -279,7 +286,6 @@ for ñ in range(number_of_iterations):
     hover_correction_factor = 1.15 #Literature (basic helicopter aerodynamics by Seddon)
     cruise_correction_factor = 1.2 #Literature (basic helicopter aerodynamics by Seddon)
     cruise_blade_profile_drag_correction_factor = 4.65 ##Literature (basic helicopter aerodynamics by Seddon), can run between 4.5-4.7
-    airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
     for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
         #print(n)

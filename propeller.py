@@ -89,8 +89,8 @@ def design(D, T_hv, V):
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
-    print(c)
-    print(beta)
+    #print(c)
+    #print(beta)
     return r, c, beta, phi, Re, omega, P, cl_mean
 
 def powers(D, T_hv, lst, wind_lst):
@@ -179,7 +179,7 @@ def powers(D, T_hv, lst, wind_lst):
 
                 plt.plot(xi, C_l)
                 plt.title(f'baseline, omega={omega}')
-                plt.show()
+                #plt.show()
 
                 C_T = np.trapz(C_T_prime, x=xi)
                 C_P = np.trapz(C_P_prime, x=xi)
@@ -263,7 +263,7 @@ def powers(D, T_hv, lst, wind_lst):
                     #plt.plot(xi, phi)
 
                 plt.title(f'psi={psi}')
-                plt.show()
+                #plt.show()
                 #print(C_P_prime)
                 #print(f'P: {P}')
                 #print(f'T: {T}')
@@ -280,7 +280,38 @@ def powers(D, T_hv, lst, wind_lst):
         powers.append(var_lst)
     return powers
 
-#print(powers(D=3, T_hv=923, lst=[[923, 3.47, 20]], wind_lst=[15, -15]))
+"""
+output = powers(D=3, T_hv=923, lst=[[923, 3.47, 20]], wind_lst=[15, -15])
 
-print(design(1.877, 499, 0.001))
+print(len(output))
+print("radial positions", output[0])
+print("chord values", output[1])
+print("twist values", output[2])
+print("mean cl", output[3])
+print("hover power", output[4])
+print(output[5][0])
+
+propeller_values = [1.0, 1.0, 1.0, 1.0, [1.0, 1.0], [1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
+
+
+
+                radial_position_values = propeller_values[0]
+                chord_values = propeller_values[1] #m
+                twist_values = propeller_values[2] #rad
+                loaded_hover_power = propeller_values[3] #W
+                unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[s]/loaded_cruise_total_thrust[s]) #W (Scale the hover power for the unloaded one)
+                loaded_climb_power = propeller_values[4][0] #W
+                loaded_climb_blade_drag = propeller_values[4][1] #N
+                unloaded_climb_power = propeller_values[5][0] #W
+                unloaded_climb_blade_drag = propeller_values[5][1] #N
+                loaded_descent_power = loaded_hover_power #W
+                loaded_descent_blade_drag = loaded_climb_blade_drag #N
+                unloaded_descent_power = unloaded_hover_power #W
+                unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
+                loaded_cruise_power = propeller_values[6][0] #W
+                loaded_cruise_blade_drag = propeller_values[6][1] #N
+                unloaded_cruise_power = propeller_values[7][0] #W
+                unloaded_cruise_blade_drag = propeller_values[7][1] #N
+"""
+#print(design(1.877, 499, 0.001))
 
