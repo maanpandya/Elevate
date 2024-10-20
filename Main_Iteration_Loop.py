@@ -6,6 +6,7 @@ from productivity_mission_profile import generate_data
 from propeller import powers
 from scipy.integrate import trapz
 from finaltrussactuallyfinal import optimize_structure
+import sys
 
 #----------------------------------------------------------------------------#
 #             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
@@ -43,7 +44,7 @@ propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
 airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
-plot_sample_productivity_mission_profile = True
+plot_sample_productivity_mission_profile = False
 plot_sample_analytical_power_curve = True
 plot_sample_analytical_mission_power_curve = True
 
@@ -390,11 +391,11 @@ for ñ in range(number_of_iterations):
                 loaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][0][15]), np.mean(productivty_mission_profiles[s][q][0][16])] #Using average value of thrust and velocities
                 unloaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][1][15]), np.mean(productivty_mission_profiles[s][q][1][16])] #Using average value of thrust and velocities
                 missions_list = [loaded_climb_mission, unloaded_climb_mission, loaded_cruise_mission, unloaded_cruise_mission]
-
-                if ñ == number_of_iterations-1:
-                    propeller_values = powers(D=productivty_mission_profiles[s][q][3][0], T_hv=(loaded_cruise_total_thrust[s] / number_of_propellers), lst=missions_list)
-                else:
-                    propeller_values = [1.0, 1.0, 1.0, 1.0, 1.0, [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]]
+                
+                
+                #propeller_values = powers(D=productivty_mission_profiles[s][q][3][r][0], T_hv=(loaded_cruise_total_thrust[s] / number_of_propellers), lst=missions_list, wind_lst=[15, -15])
+                
+                propeller_values = [1.0, 1.0, 1.0, 1.0, 1.0, [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]]
 
                 radial_position_values = propeller_values[0]
                 chord_values = propeller_values[1] #m
@@ -931,8 +932,8 @@ for ñ in range(number_of_iterations):
         beam_mass_truss = optimize_structure(T=np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))) / number_of_propellers, L=l_arm, truss=True)
         beam_mass = optimize_structure(T=np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))) / number_of_propellers, L=l_arm, truss=False)
         
-        print("Propeller beam mass with truss (not included in weight sum)", beam_mass_truss)
-        print("Propeller beam mass without truss (not included in weight sum)", beam_mass)
+        print("Propeller beam mass with truss (not included in weight sum)", beam_mass_truss["mass"])
+        print("Propeller beam mass without truss (not included in weight sum)", beam_mass["mass"])
         print("propeller diameter", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]])
         print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
         print("Maximum thrust\n", np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))))
@@ -981,11 +982,10 @@ for ñ in range(number_of_iterations):
         print("Flights flown with one battery", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][6])
         print("Loaded single climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7] / 60.0)
         print("Unloaded single climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8] / 60.0)
-        print("Unloaded single climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9] / 60.0)
-        print("Loaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10] / 60.0)
-        print("Unloaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11] / 60.0)
+        print("Loaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9] / 60.0)
+        print("Unloaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10] / 60.0)
         print("Total ferried payload", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1] * payload_mass[index1])
-        print("Total mission time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][12]/60.0)
+        print("Total mission time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11]/60.0)
     
         #specific_productivity_mission_information = [total_flight_number, loaded_flight_number, unloaded_flight_number, mission_climb_time, mission_cruise_time, battery_pack_number, single_charge_flight_number, loaded_climb_time, unloaded_climb_time, loaded_cruise_time, unloaded_cruise_time, mission_time]
 
@@ -1007,72 +1007,12 @@ for ñ in range(number_of_iterations):
         print("Hover", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][4])
         print("climb", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][5])
         print("descent", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][6])   
-
-        print("\nEverything from this point on is obtained with the numerical power method")
-
-        print("Masses (numerical)")
-        print("fuselage", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][0])
-        print("motor 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][1])
-        print("blade 1 ", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][2])
-        print("blade 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][3])
-        print("motor 3", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][4])
-        print("motor controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][5])
-        print("fuselage 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][6])
-        print("landing gear", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][7])
-        print("flight controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][8])
-        print("avionics", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][9])
-        print("furnishings", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][10])
-        print("single battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][0])
-        print("total battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][1])
-        print("Beams mass (set as 0 for now)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][11])
-        print("propeller diameter", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]])
-        print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
-        print("Maximum thrust\n", np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))))
-
-
-        print("Class II OEM")
-
-        print("mission 2")
-        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][0])
-        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][1])
-
-        print("Class II MTM")
-
-        print("mission 2")
-        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][2])
-        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][3])
+        
+        loaded_cruise_time = productivty_mission_profiles[index1][index2[0]][0][0][len(productivty_mission_profiles[index1][index2[0]][0][7]):len(productivty_mission_profiles[index1][index2[0]][0][7])+len(productivty_mission_profiles[index1][index2[0]][0][10])] #s
+        unloaded_cruise_time = productivty_mission_profiles[index1][index2[0]][0][0][len(productivty_mission_profiles[index1][index2[0]][1][7]):len(productivty_mission_profiles[index1][index2[0]][1][7])+len(productivty_mission_profiles[index1][index2[0]][1][10])] #s
 
         
-        print("productivity ratio 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][6])
-        print("productivity ratio 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][7])
-
-        print("\nMean propeller lift coefficient", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][3][3])
-
-        print("\nAverage loaded powers (numerical method)")
-        print("cruise", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][1][3])
-        print("hover", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][1][0])
-        print("climb", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][1][1])
-        print("descent", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][1][2])
-
-        print("\nAverage unloaded powers (numerical method)")
-        print("cruise", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][2][3])
-        print("hover", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][2][0])
-        print("climb", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][2][1])
-        print("descent", productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][2][2])
-
-
-        plt.plot(productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][3][0], productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][3][2])
-        plt.xlabel("Radial position")
-        plt.ylabel("Chord (m)")
-        plt.title("Chord distribution of the propeller")
-
-        plt.plot(productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][3][0], productivty_mission_profiles[index1][index2[0]][3][4][index2[1]][3][3] * (360/2*np.pi))
-        plt.xlabel("Radial position")
-        plt.ylabel("Twist (degree)")
-        plt.title("Twist distribution of the propeller")
-
         fig, axes = plt.subplots(3, 3, figsize=(12, 6)) 
-
         fig.tight_layout(pad=3.0)
 
         # Subplot 1: Altitude vs Time
@@ -1157,6 +1097,102 @@ for ñ in range(number_of_iterations):
         axes[2, 2].grid(True)
 
         plt.show()
+
+
+        print("\nEverything from this point on is obtained with the numerical power method")
+
+        loaded_climb_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][0][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+        unloaded_climb_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][1][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+        loaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][0][15]), np.mean(productivty_mission_profiles[index1][index2[0]][0][16])] #Using average value of thrust and velocities
+        unloaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][1][15]), np.mean(productivty_mission_profiles[index1][index2[0]][1][16])] #Using average value of thrust and velocities
+        missions_list = [loaded_cruise_mission, unloaded_cruise_mission, loaded_climb_mission, unloaded_climb_mission]
+        print(missions_list)
+        propeller_values = powers(D=productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], T_hv=(loaded_cruise_total_thrust[index1] / number_of_propellers), lst=[loaded_cruise_mission], wind_lst=[1, -1])
+
+        radial_position_values = propeller_values[0]
+        chord_values = propeller_values[1] #m
+        twist_values = propeller_values[2] #rad
+        mean_propeller_lift_coefficient = propeller_values[3]
+        loaded_hover_power = propeller_values[4] #W
+        unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[index1]/loaded_cruise_total_thrust[index1]) #W (Scale the hover power for the unloaded one)
+        #loaded_climb_power = propeller_values[5][0][0] #W
+        #loaded_climb_blade_drag = propeller_values[5][0][1] #N
+        #unloaded_climb_power = propeller_values[6][0][0] #W
+        #unloaded_climb_blade_drag = propeller_values[6][0][1] #N
+        #loaded_descent_power = loaded_hover_power #W
+        #loaded_descent_blade_drag = loaded_climb_blade_drag #N
+        #unloaded_descent_power = unloaded_hover_power #W
+        #unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
+        loaded_cruise_power = propeller_values[5][0][0] #W
+        loaded_cruise_blade_drag = propeller_values[5][0][1] #N
+        #unloaded_cruise_power = propeller_values[8][0][0] #W
+        #unloaded_cruise_blade_drag = propeller_values[8][0][1] #N     
+
+        """
+        print("Masses (numerical)")
+        print("fuselage", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][0])
+        print("motor 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][1])
+        print("blade 1 ", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][2])
+        print("blade 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][3])
+        print("motor 3", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][4])
+        print("motor controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][5])
+        print("fuselage 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][6])
+        print("landing gear", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][7])
+        print("flight controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][8])
+        print("avionics", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][9])
+        print("furnishings", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][10])
+        print("single battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][0])
+        print("total battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][1])
+        print("Beams mass (set as 0 for now)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][11])
+        print("propeller diameter", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]])
+        print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
+        print("Maximum thrust\n", np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))))
+
+
+        print("Class II OEM")
+
+        print("mission 2")
+        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][0])
+        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][1])
+
+        print("Class II MTM")
+
+        print("mission 2")
+        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][2])
+        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][3])
+
+        
+        print("productivity ratio 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][6])
+        print("productivity ratio 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][7])
+        """
+        print("\nMean propeller lift coefficient", mean_propeller_lift_coefficient)
+
+        print("\nAverage loaded powers (numerical method)")
+        print("cruise", loaded_cruise_power)
+        print("hover", loaded_hover_power)
+        #print("climb", loaded_climb_power)
+        #print("descent", loaded_descent_power)
+        """
+        print("\nAverage unloaded powers (numerical method)")
+        print("cruise", unloaded_cruise_power)
+        print("hover", unloaded_hover_power)
+        print("climb", unloaded_climb_power)
+        print("descent", unloaded_descent_power)
+        """
+
+        plt.plot(radial_position_values, chord_values)
+        plt.xlabel("Radial position")
+        plt.ylabel("Chord (m)")
+        plt.title("Chord distribution of the propeller")
+
+        plt.plot(radial_position_values, twist_values * (360/2*np.pi))
+        plt.xlabel("Radial position")
+        plt.ylabel("Twist (degree)")
+        plt.title("Twist distribution of the propeller")
+
+        
+
+        
 
 mass_list = []
 for j in range(len(class_II_maximum_take_off_mass_evolution)):
