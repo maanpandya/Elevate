@@ -11,10 +11,11 @@ class Configuration:
     l_max = 8.53
 
 
-    def __init__(self, type, N_blades, D_hub, Chord_root):
+    def __init__(self, type, N_blades, D_hub, H_hub, Chord_root):
         self.type = type
         self.N = N_blades
         self.D_hub = D_hub
+        self.H_hub = H_hub
         self.Cr = Chord_root
 
     def max_diam(self, folding):
@@ -182,21 +183,14 @@ class Configuration:
                       ['Pin_location: (L, W)', l_outerpin, self.w_fuselage/2]]
         l_folded = max(l_outerhub + frontmargin_out, l_centerhub + frontmargin)
         width = w_outerhub * 2 + D_prop
-        #print(frontmargin_out, frontmargin, Z)
+        angle_hinge = np.arctan2(self.H_hub, (w_outerhub-Z/2))
 
-        return l_arm, width, 2 * l_folded, hub_coords
+        return l_arm, width, 2 * l_folded, np.degrees(angle_hinge), hub_coords
 
-#[hori_fold, blade number, hub diameter, chord root]
 
-"""
-config1 = Configuration("Hori_fold", 2, 0.3, 0.1)
-fold = False     # Limits in-flight width.
-diameter_limit = 3
+config1 = Configuration("Hori_fold", 4, 0.3, 0.2, 0.1)
+fold = True     # Limits in-flight width.
+diameter_limit = 4
 dia_max = config1.max_diam(fold)
 print(dia_max)
-l_arm, width, length_folded, hub_coords = config1.arm(min(dia_max, diameter_limit), fold)
-print(l_arm)
-print(width)
-print(length_folded)
-print(hub_coords)
-"""
+print(config1.arm(min(dia_max, diameter_limit), fold))
