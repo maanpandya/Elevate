@@ -8,16 +8,17 @@ L = 1  # length
 I = (1/3) * m_rod * L**2+ m_motor*L**2  # Moment of inertia
 
 theta_f = (4/9) * np.pi  # Final angle to cover
-t_f = 30  # Total time
-A = (theta_f * np.pi**2) / (t_f**2)  # Amplitude for acceleration
+t_f = 30  # Total time  
+angular_freq= 2*np.pi/(t_f) # Angular frequency
+A = theta_f/(angular_freq*t_f-angular_freq**2*np.sin(angular_freq*t_f))
 
 # Time array
 t = np.linspace(0, t_f, 1000)
 
 # Angular acceleration, velocity, and position functions
-alpha_t = A * np.sin(np.pi * t / t_f)
-omega_t = -A * (t_f / np.pi) * np.cos(np.pi * t / t_f) + A * (t_f / np.pi)
-theta_t = A * (t_f**2 / np.pi**2) * np.sin(np.pi * t / t_f)
+alpha_t = A * np.sin(angular_freq * t)
+omega_t = -A * (angular_freq) * np.cos(angular_freq*t) + A * (angular_freq)
+theta_t = -A * (angular_freq**2) * np.sin(angular_freq*t)+ A * (angular_freq)*t
 
 # Torque as a function of time
 torque_t = I * alpha_t
@@ -45,3 +46,4 @@ plt.tight_layout()
 plt.show()
 
 print("The maximum torque required is:", np.max(torque_t))
+print("The maximum angle is:", np.rad2deg(np.max(theta_t)))
