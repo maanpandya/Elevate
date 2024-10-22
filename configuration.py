@@ -187,10 +187,11 @@ class Configuration:
 
         return l_arm, width, 2 * l_folded, np.degrees(angle_hinge), hub_coords
 
-
+"""
 config1 = Configuration("Hori_fold", 4, 0.3, 0.2, 0.1)
 fold = True     # Limits in-flight width.
 diameter_limit = 4
 dia_max = config1.max_diam(fold)
 print(dia_max)
 print(config1.arm(min(dia_max, diameter_limit), fold))
+"""

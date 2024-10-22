@@ -278,10 +278,11 @@ def powers(D, T_hv, lst, wind_lst):
                 omega*=np.sqrt(T_conv/T)
             var_lst.append([P, blade_drag])
         powers.append(var_lst)
+        plt.clf()
     return powers
 
 """
-output = powers(D=3, T_hv=923, lst=[[923, 3.47, 20], [1000, 5]], wind_lst=[15, -15])
+output = powers(D=3, T_hv=923, lst=[[923, 3.47, 20]], wind_lst=[15, -15])
 
 print(len(output))
 print("radial positions", output[0])
@@ -289,8 +290,13 @@ print("chord values", output[1])
 print("twist values", output[2])
 print("mean cl", output[3])
 print("hover power", output[4])
-print(output[5])
-print(output[6])
+
+
+plt.plot(output[0], output[1])
+plt.xlabel("Radial position")
+plt.ylabel("Chord (m)")
+plt.title("Chord distribution of the propeller")
+plt.show()
 
 propeller_values = [1.0, 1.0, 1.0, 1.0, [1.0, 1.0], [1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
 

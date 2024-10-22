@@ -43,6 +43,7 @@ propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
 airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
+propeller_hub_height = 0.2 #m
 
 plot_sample_productivity_mission_profile = False
 plot_sample_analytical_power_curve = True
@@ -100,7 +101,7 @@ for ñ in range(number_of_iterations):
 
     #First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
     #propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
-    configuration_class = Configuration("Hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord)
+    configuration_class = Configuration("Hori_fold", number_of_blades, propeller_hub_diameter, propeller_hub_height, blade_root_chord)
     mid_air_folding = False
     propeller_diameter_max = configuration_class.max_diam(mid_air_folding) #m^2 (Maximum propeller diameter from geometrical constraints)
     propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
@@ -144,8 +145,8 @@ for ñ in range(number_of_iterations):
 
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
             modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
 
             #if h == 51 and k == 7:
                 #print(modified_cruise_angle_of_attack)
@@ -167,8 +168,8 @@ for ñ in range(number_of_iterations):
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
             modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
 
             unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
 
@@ -900,10 +901,11 @@ for ñ in range(number_of_iterations):
         print("Final configuration summary")
 
         print("\nVehicle Dimensions")
-        l_arm, width, length_folded, hub_coords = configuration_class.arm(productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], mid_air_folding)
+        l_arm, width, length_folded, fold_angle, hub_coords = configuration_class.arm(productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], mid_air_folding)
         print("Propeller beam length", l_arm)
         print("Unfolded total width", width)
         print("Folded length", length_folded)
+        print("Beam fold angle (deg)", fold_angle)
         print(hub_coords[0])
         print(hub_coords[1])
         print(hub_coords[2])
@@ -1106,8 +1108,13 @@ for ñ in range(number_of_iterations):
         loaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][0][15]), np.mean(productivty_mission_profiles[index1][index2[0]][0][16])] #Using average value of thrust and velocities
         unloaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][1][15]), np.mean(productivty_mission_profiles[index1][index2[0]][1][16])] #Using average value of thrust and velocities
         missions_list = [loaded_cruise_mission, unloaded_cruise_mission, loaded_climb_mission, unloaded_climb_mission]
-        print(missions_list)
-        propeller_values = powers(D=productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], T_hv=(loaded_cruise_total_thrust[index1] / number_of_propellers), lst=[loaded_cruise_mission], wind_lst=[1, -1])
+        
+        print("Mission [thrust, normal velocity, tangential velocity]")
+        print("Loaded cruise mission", missions_list[0])
+        print("Unloaded cruise mission", missions_list[1])
+        print("Loaded climb mission", missions_list[2])
+        print("Unloaded climb mission", missions_list[3])
+        propeller_values = powers(D=productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], T_hv=(loaded_cruise_total_thrust[index1] / number_of_propellers), lst=missions_list, wind_lst=[1, -1])
 
         radial_position_values = propeller_values[0]
         chord_values = propeller_values[1] #m
@@ -1115,18 +1122,21 @@ for ñ in range(number_of_iterations):
         mean_propeller_lift_coefficient = propeller_values[3]
         loaded_hover_power = propeller_values[4] #W
         unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[index1]/loaded_cruise_total_thrust[index1]) #W (Scale the hover power for the unloaded one)
-        #loaded_climb_power = propeller_values[5][0][0] #W
-        #loaded_climb_blade_drag = propeller_values[5][0][1] #N
-        #unloaded_climb_power = propeller_values[6][0][0] #W
-        #unloaded_climb_blade_drag = propeller_values[6][0][1] #N
-        #loaded_descent_power = loaded_hover_power #W
-        #loaded_descent_blade_drag = loaded_climb_blade_drag #N
-        #unloaded_descent_power = unloaded_hover_power #W
-        #unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
+        loaded_climb_power = propeller_values[5][0][0] #W
+        loaded_climb_blade_drag = propeller_values[5][0][1] #N
+        unloaded_climb_power = propeller_values[6][0][0] #W
+        unloaded_climb_blade_drag = propeller_values[6][0][1] #N
+        loaded_descent_power = loaded_hover_power #W
+        loaded_descent_blade_drag = loaded_climb_blade_drag #N
+        unloaded_descent_power = unloaded_hover_power #W
+        unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
         loaded_cruise_power = propeller_values[5][0][0] #W
         loaded_cruise_blade_drag = propeller_values[5][0][1] #N
-        #unloaded_cruise_power = propeller_values[8][0][0] #W
-        #unloaded_cruise_blade_drag = propeller_values[8][0][1] #N     
+        unloaded_cruise_power = propeller_values[8][0][0] #W
+        unloaded_cruise_blade_drag = propeller_values[8][0][1] #N     
+
+        print("chord", chord_values)
+        print("twist", twist_values)
 
         """
         print("Masses (numerical)")
@@ -1168,28 +1178,30 @@ for ñ in range(number_of_iterations):
         print("\nMean propeller lift coefficient", mean_propeller_lift_coefficient)
 
         print("\nAverage loaded powers (numerical method)")
-        print("cruise", loaded_cruise_power)
-        print("hover", loaded_hover_power)
-        #print("climb", loaded_climb_power)
-        #print("descent", loaded_descent_power)
-        """
+        print("cruise", loaded_cruise_power*number_of_propellers)
+        print("hover", loaded_hover_power*number_of_propellers)
+        print("climb", loaded_climb_power*number_of_propellers)
+        print("descent", loaded_descent_power*number_of_propellers)
+        
         print("\nAverage unloaded powers (numerical method)")
-        print("cruise", unloaded_cruise_power)
-        print("hover", unloaded_hover_power)
-        print("climb", unloaded_climb_power)
-        print("descent", unloaded_descent_power)
-        """
+        print("cruise", unloaded_cruise_power*number_of_propellers)
+        print("hover", unloaded_hover_power*number_of_propellers)
+        print("climb", unloaded_climb_power*number_of_propellers)
+        print("descent", unloaded_descent_power*number_of_propellers)
+        
 
         plt.plot(radial_position_values, chord_values)
         plt.xlabel("Radial position")
         plt.ylabel("Chord (m)")
         plt.title("Chord distribution of the propeller")
+        plt.show()
 
-        plt.plot(radial_position_values, twist_values * (360/2*np.pi))
+
+        plt.plot(radial_position_values, twist_values * (360/(2*np.pi)))
         plt.xlabel("Radial position")
         plt.ylabel("Twist (degree)")
         plt.title("Twist distribution of the propeller")
-
+        plt.show()
         
 
         
