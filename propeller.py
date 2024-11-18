@@ -13,13 +13,13 @@ dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
 a = 340
 B=2
-foil = 'NACA 4415'
+foil = 'dae11.DAT'
 foilpath = foil.replace(" ", "_")
 
 def design(D, T_hv, V):
     #print(T_hv)
     nr_sect = 100
-    D_hub = 0.3048
+    D_hub = D/5.75
     mach_tip = 0.6
     zeta_acc = 0.001
     V_displ=20
@@ -280,7 +280,7 @@ def powers(D, T_hv, lst, wind_lst):
         powers.append(var_lst)
     return powers
 
-#print(powers(D=3, T_hv=923, lst=[[923, 3.47, 20]], wind_lst=[15, -15]))
+#print(powers(D=2, T_hv=583, lst=[[600.2130211835558, 4.941286552985221, 29.687954154618136], [360.9971821340844, 7.697425215730051, 29.062173380815263], [592.4494820678754, 5], [350.5568701406026,5]], wind_lst=[1, -1]))
 
-print(design(1.877, 499, 0.001))
+print(design(2, 600, 0.001))
 

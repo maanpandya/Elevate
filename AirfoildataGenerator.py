@@ -21,7 +21,7 @@ def make_airfoildata(airfoil, foilpath, angles, re_nrs, verify):
 
     #Collect data from xfoil:
     for re_nr in re_nrs:
-        data = np.array(run_xfoil(airfoil, 10 ** re_nr, (angles[0], angles[-1], angles[1] - angles[0]), ncrit=5))
+        data = np.array(run_xfoil('dat_files/'+airfoil, 10 ** re_nr, (angles[0], angles[-1], angles[1] - angles[0]), ncrit=5))
         if data.size != 0:
             points = np.append(points, np.insert(np.expand_dims(np.array(data[:, 0]), axis=1), 0, re_nr, axis=1))
             cl_data = np.append(cl_data, data[:, 1])
@@ -114,4 +114,4 @@ def make_airfoildata(airfoil, foilpath, angles, re_nrs, verify):
     with open('AirfoilData/' + foilpath + '/clcdmaxcl_func.pkl', 'wb') as file:
         pickle.dump(clcdmaxcl_func, file)
 
-make_airfoildata('NACA 2412', 'NACA_2412', np.arange(10, 0, -0.2), np.arange(3, 8, 1), True)
+#make_airfoildata('NACA 2412', 'NACA_2412', np.arange(10, 0, -0.2), np.arange(3, 8, 1), True)
