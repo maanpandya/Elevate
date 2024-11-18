@@ -1,10 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from propeller_diameter import diamgenerator
+from configuration import Configuration
 from productivity_mission_profile import generate_data
 from propeller import powers
 from scipy.integrate import trapz
 from finaltrussactuallyfinal import optimize_structure
+import sys
 
 #----------------------------------------------------------------------------#
 #             INITIAL REMARKS AND FEATURES TO BE IMPLEMENTED                 #
@@ -40,8 +42,10 @@ propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
 propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
+airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
+propeller_hub_height = 0.2 #m
 
-plot_sample_productivity_mission_profile = True
+plot_sample_productivity_mission_profile = False
 plot_sample_analytical_power_curve = True
 plot_sample_analytical_mission_power_curve = True
 
@@ -96,7 +100,10 @@ for ñ in range(number_of_iterations):
     #-------------------------Rotor Sizing----------------------------#
 
     #First rotor size estimate is purely based on geometrical limitations, we cannot go further than that
-    propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
+    #propeller_diameter_max = diamgenerator("hori_fold", number_of_blades, propeller_hub_diameter, blade_root_chord, propeller_beam_width, propeller_beam_pin_width_position, propeller_beam_pin_height_position, propeller_height_difference) - propeller_diameter_clearance #m (Maximum propeller diameter from geometrical constraints)
+    configuration_class = Configuration("Hori_fold", number_of_blades, propeller_hub_diameter, propeller_hub_height, blade_root_chord)
+    mid_air_folding = False
+    propeller_diameter_max = configuration_class.max_diam(mid_air_folding) #m^2 (Maximum propeller diameter from geometrical constraints)
     propeller_area_max = np.pi * (propeller_diameter_max / 2.0) * (propeller_diameter_max / 2.0) #m^2
     total_propeller_area_max = propeller_area_max * number_of_propellers #m^2
     disk_loading_max = (maximum_maneuvering_total_thrust / g) / total_propeller_area_max #kg/m^2
@@ -114,7 +121,7 @@ for ñ in range(number_of_iterations):
     #-------------------Mission Velocity & Thrust Profiles-----------------------#
 
     cruise_velocity = np.arange(5, 65, 5) #m/s 
-    climb_velocity = 10.0 #m/s
+    climb_velocity = 5 #m/s
     cruise_height = 300 #m (Design choice, could be bound by regulations)
     max_acceleration = g #m/s^2 (Design choice, eVTOLs don't generally accelerate more than this)
     mission_distance = 3000.0 #m
@@ -131,34 +138,40 @@ for ñ in range(number_of_iterations):
         for k in range(len(cruise_velocity)):
 
             #Loaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_maximum_take_off_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_maximum_take_off_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
 
-            #if h == 51 and k == 7:
-            #    print(thrust_climb)
-            #     print(velocity)
-            #    print(thrust_cruise_vertical[0:2])
-            #    print(thrust_cruise_horizontal[0:2])
-            #    print(thrust_cruise[0:2])
-
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+            modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
 
-            loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+            #if h == 51 and k == 7:
+                #print(modified_cruise_angle_of_attack)
+                #print("normal velocity", rotor_normal_cruise_velocity)
+                #print("tangential velocity", rotor_tangential_cruise_velocity)
+                #print("climb", thrust_climb)
+                #print(velocity)
+                #print("thrust cruise vertical", thrust_cruise_vertical)
+                #print("thrust cruise horizontal", thrust_cruise_horizontal)
+                #print("cruise", thrust_cruise)
+                #print("descent", thrust_descent)
+
+            loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
             
             #Unloaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent = generate_data(class_I_operational_empty_mass[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_operational_empty_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
             cruise_angle_of_attack = np.arctan2(thrust_cruise_vertical, thrust_cruise_horizontal)
-            rotor_normal_cruise_velocity = velocity_cruise * np.sin(cruise_angle_of_attack)
-            rotor_tangential_cruise_velocity = velocity_cruise * np.cos(cruise_angle_of_attack)
+            modified_cruise_angle_of_attack = np.where(cruise_angle_of_attack > np.pi/2.0, np.pi-cruise_angle_of_attack, cruise_angle_of_attack)
+            rotor_normal_cruise_velocity = velocity_cruise * np.cos(modified_cruise_angle_of_attack)
+            rotor_tangential_cruise_velocity = velocity_cruise * np.sin(modified_cruise_angle_of_attack)
 
-            unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent]
+            unloaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
 
             #Propeller diameter range generation with previous sizing
             propeller_diameter = np.linspace(propeller_diameter_min[h], propeller_diameter_max, 50) #m
@@ -177,7 +190,7 @@ for ñ in range(number_of_iterations):
 
     #print(np.hstack((productivty_mission_profiles[51][7][0][7], productivty_mission_profiles[51][7][0][10], productivty_mission_profiles[51][7][0][12])))
 
-    if plot_sample_productivity_mission_profile and ñ==number_of_iterations-1:
+    if plot_sample_productivity_mission_profile:
 
         fig, axes = plt.subplots(3, 3, figsize=(12, 6)) 
 
@@ -256,11 +269,11 @@ for ñ in range(number_of_iterations):
         axes[2, 1].grid(True)
 
         # Subplot 9: Power vs Time
-        axes[2, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][4], label="Loaded") 
-        axes[2, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][4], label="Unloaded") 
-        axes[2, 2].set_title('Power vs Time')  
+        axes[2, 2].plot(productivty_mission_profiles[51][7][0][0], productivty_mission_profiles[51][7][0][-1]/g, label="Loaded") 
+        axes[2, 2].plot(productivty_mission_profiles[51][7][1][0], productivty_mission_profiles[51][7][1][-1]/g, label="Unloaded") 
+        axes[2, 2].set_title('Acceleration vs Time')  
         axes[2, 2].set_xlabel('Time (s)')  
-        axes[2, 2].set_ylabel('Power (W)') 
+        axes[2, 2].set_ylabel('Acceleration (m/s^2)') 
         axes[2, 2].legend()
         axes[2, 2].grid(True)
 
@@ -279,7 +292,6 @@ for ñ in range(number_of_iterations):
     hover_correction_factor = 1.15 #Literature (basic helicopter aerodynamics by Seddon)
     cruise_correction_factor = 1.2 #Literature (basic helicopter aerodynamics by Seddon)
     cruise_blade_profile_drag_correction_factor = 4.65 ##Literature (basic helicopter aerodynamics by Seddon), can run between 4.5-4.7
-    airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 
     for n in range(len(productivty_mission_profiles)): #Loop over each payload combination
         #print(n)
@@ -380,33 +392,36 @@ for ñ in range(number_of_iterations):
                 loaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][0][15]), np.mean(productivty_mission_profiles[s][q][0][16])] #Using average value of thrust and velocities
                 unloaded_cruise_mission = [np.mean(productivty_mission_profiles[s][q][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[s][q][1][15]), np.mean(productivty_mission_profiles[s][q][1][16])] #Using average value of thrust and velocities
                 missions_list = [loaded_climb_mission, unloaded_climb_mission, loaded_cruise_mission, unloaded_cruise_mission]
-
-                #propeller_values = powers(D=productivty_mission_profiles[s][q][3][0], T_hv=(loaded_cruise_total_thrust[s] / number_of_propellers), lst=missions_list)
-                propeller_values = [1.0, 1.0, 1.0, 1.0, [1.0, 1.0], [1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
+                
+                
+                #propeller_values = powers(D=productivty_mission_profiles[s][q][3][r][0], T_hv=(loaded_cruise_total_thrust[s] / number_of_propellers), lst=missions_list, wind_lst=[15, -15])
+                
+                propeller_values = [1.0, 1.0, 1.0, 1.0, 1.0, [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]]
 
                 radial_position_values = propeller_values[0]
                 chord_values = propeller_values[1] #m
                 twist_values = propeller_values[2] #rad
-                loaded_hover_power = propeller_values[3] #W
+                mean_propeller_lift_coefficient = propeller_values[3]
+                loaded_hover_power = propeller_values[4] #W
                 unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[s]/loaded_cruise_total_thrust[s]) #W (Scale the hover power for the unloaded one)
-                loaded_climb_power = propeller_values[4][0] #W
-                loaded_climb_blade_drag = propeller_values[4][1] #N
-                unloaded_climb_power = propeller_values[5][0] #W
-                unloaded_climb_blade_drag = propeller_values[5][1] #N
+                loaded_climb_power = propeller_values[5][0][0] #W
+                loaded_climb_blade_drag = propeller_values[5][0][1] #N
+                unloaded_climb_power = propeller_values[6][0][0] #W
+                unloaded_climb_blade_drag = propeller_values[6][0][1] #N
                 loaded_descent_power = loaded_hover_power #W
                 loaded_descent_blade_drag = loaded_climb_blade_drag #N
                 unloaded_descent_power = unloaded_hover_power #W
                 unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
-                loaded_cruise_power = propeller_values[6][0] #W
-                loaded_cruise_blade_drag = propeller_values[6][1] #N
-                unloaded_cruise_power = propeller_values[7][0] #W
-                unloaded_cruise_blade_drag = propeller_values[7][1] #N
+                loaded_cruise_power = propeller_values[7][0][0] #W
+                loaded_cruise_blade_drag = propeller_values[7][0][1] #N
+                unloaded_cruise_power = propeller_values[8][0][0] #W
+                unloaded_cruise_blade_drag = propeller_values[8][0][1] #N
 
                 loaded_power_values = [loaded_hover_power, loaded_climb_power, loaded_descent_power, loaded_cruise_power]
                 unloaded_power_values = [unloaded_hover_power, unloaded_climb_power, unloaded_descent_power, unloaded_cruise_power]
                 loaded_blade_drag_values = [loaded_climb_blade_drag, loaded_descent_blade_drag, loaded_cruise_blade_drag]
                 unloaded_blade_drag_values = [unloaded_climb_blade_drag, unloaded_descent_blade_drag, unloaded_cruise_blade_drag]
-                propeller_geometry = [radial_position_values, chord_values, twist_values]
+                propeller_geometry = [radial_position_values, chord_values, twist_values, mean_propeller_lift_coefficient]
                 propeller_specific_power_values.append(loaded_power_values)
                 propeller_specific_power_values.append(unloaded_power_values)
                 propeller_specific_power_values.append(loaded_blade_drag_values)
@@ -702,7 +717,10 @@ for ñ in range(number_of_iterations):
                 flight_control_system_mass = 11.5 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor)/1000.0)**(0.4) * pound_to_kilo_conversion_factor #kg
                 avionics_mass = 0.0268**(class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor) * pound_to_kilo_conversion_factor #kg
                 furnishings_mass = 13 * ((class_I_maximum_take_off_mass[i] * kilo_to_pound_conversion_factor) / 1000)**(1.3) * pound_to_kilo_conversion_factor #kg
-                #propeller_beams_mass = optimize_structure(np.max(productivty_mission_profiles[i][j][0][10]), productivty_mission_profiles[i][j][3][0][k])["mass"] * number_of_propellers #kg
+                
+                #if ñ == number_of_iterations-2:
+                #    propeller_beams_mass = optimize_structure(np.max(np.hstack((productivty_mission_profiles[i][j][0][7], productivty_mission_profiles[i][j][0][10], productivty_mission_profiles[i][j][0][12])), productivty_mission_profiles[i][j][3][0][k])["mass"] * number_of_propellers #kg
+                #else:
                 propeller_beams_mass = 0
                 #Rohit's Class II Weight Estimation (9)
                 #maximum_battery_power = max(cruise_power_values[0], hover_power_values[0], vertical_climb_power_values[0]) / 1000.0 #kW (Assuming it is the same as the propeller, should be modified)
@@ -881,6 +899,19 @@ for ñ in range(number_of_iterations):
         print(index1)
         print(index2)
         print("Final configuration summary")
+
+        print("\nVehicle Dimensions")
+        l_arm, width, length_folded, fold_angle, hub_coords = configuration_class.arm(productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], mid_air_folding)
+        print("Propeller beam length", l_arm)
+        print("Unfolded total width", width)
+        print("Folded length", length_folded)
+        print("Beam fold angle (deg)", fold_angle)
+        print(hub_coords[0])
+        print(hub_coords[1])
+        print(hub_coords[2])
+        print(hub_coords[3]) 
+
+
         print("Masses")
         print("payload", payload_mass[index1])
         print("payload composition", payload_mass_identifier[index1])
@@ -898,15 +929,16 @@ for ñ in range(number_of_iterations):
         print("furnishings", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][2][10])
         print("single battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][0][0])
         print("total battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][0][1])
-        print("Beams mass (set as 0 for now)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][2][11])
+        #print("Beams mass (set as 0 for now)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][2][11])
+        
+        beam_mass_truss = optimize_structure(T=np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))) / number_of_propellers, L=l_arm, truss=True)
+        beam_mass = optimize_structure(T=np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))) / number_of_propellers, L=l_arm, truss=False)
+        
+        print("Propeller beam mass with truss (not included in weight sum)", beam_mass_truss["mass"])
+        print("Propeller beam mass without truss (not included in weight sum)", beam_mass["mass"])
         print("propeller diameter", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]])
         print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
-        print("Maximum cruise thrust\n", np.max(productivty_mission_profiles[index1][3][0][10]))
-
-        print("EVTOL dimensions")
-        print("Total length", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]]*3)
-        print("Total width", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]]*3*np.cos(np.pi/6.0))
-        print("Propeller beam length", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]] / 2)
+        print("Maximum thrust\n", np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))))
 
         print("Class II OEM")
 
@@ -924,7 +956,8 @@ for ñ in range(number_of_iterations):
         print("productivity ratio 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][6])
         print("productivity ratio 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][0][7])
 
-        print("Productivty Mission Summary")
+        """
+        print("\nProductivty Mission Summary")
         print("total flights", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][0])
         print("total loaded flights", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1])
         print("total ferried payload", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1] * payload_mass[index1])
@@ -938,24 +971,27 @@ for ñ in range(number_of_iterations):
         print("loaded cruise time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9] / 60)
         print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8] / 60)
         print("unloaded climb time (min)\n", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7] / 60)
-        
-        print("Productivity mission summary list")
+        """
+
+
+        print("\nProductivity mission summary list")
         print("Total flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][0])
         print("Loaded flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1])
         print("Unloaded flight number", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][2])
-        print("Total mission climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][3])
-        print("Total mission cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][4])
+        print("Total mission climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][3] / 60.0)
+        print("Total mission cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][4] / 60.0)
         print("Total battery packs", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][5])
         print("Flights flown with one battery", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][6])
-        print("Loaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7])
-        print("Unloaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8])
-        print("Unloaded single climb time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9])
-        print("Loaded single cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10])
-        print("Unloaded single cruise time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11])
-        print("Total mission time", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][12]/60.0)
+        print("Loaded single climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][7] / 60.0)
+        print("Unloaded single climb time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][8] / 60.0)
+        print("Loaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][9] / 60.0)
+        print("Unloaded single cruise time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][10] / 60.0)
+        print("Total ferried payload", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][1] * payload_mass[index1])
+        print("Total mission time (min)", productivty_mission_profiles[index1][index2[0]][3][5][index2[1]][index2[2]][11]/60.0)
+    
+        #specific_productivity_mission_information = [total_flight_number, loaded_flight_number, unloaded_flight_number, mission_climb_time, mission_cruise_time, battery_pack_number, single_charge_flight_number, loaded_climb_time, unloaded_climb_time, loaded_cruise_time, unloaded_cruise_time, mission_time]
 
-
-        print("Average loaded powers")
+        print("\nAverage loaded powers (analytical method)")
         print("cruise", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][0])
         print("cruise (induced)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][1])
         print("cruise (profile)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][2])
@@ -965,17 +1001,210 @@ for ñ in range(number_of_iterations):
         print("descent\n", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][1][4][6])
 
 
-        print("Average unloaded powers")
+        print("\nAverage unloaded powers (analytical method)")
         print("cruise", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][0])
         print("cruise (induced)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][1])
         print("cruise (profile)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][2])
         print("cruise (parasitic)", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][3])
         print("Hover", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][4])
         print("climb", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][5])
-        print("descent", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][6])
+        print("descent", productivty_mission_profiles[index1][index2[0]][3][3][index2[1]][2][4][6])   
+        
+        loaded_cruise_time = productivty_mission_profiles[index1][index2[0]][0][0][len(productivty_mission_profiles[index1][index2[0]][0][7]):len(productivty_mission_profiles[index1][index2[0]][0][7])+len(productivty_mission_profiles[index1][index2[0]][0][10])] #s
+        unloaded_cruise_time = productivty_mission_profiles[index1][index2[0]][0][0][len(productivty_mission_profiles[index1][index2[0]][1][7]):len(productivty_mission_profiles[index1][index2[0]][1][7])+len(productivty_mission_profiles[index1][index2[0]][1][10])] #s
+
+        
+        fig, axes = plt.subplots(3, 3, figsize=(12, 6)) 
+        fig.tight_layout(pad=3.0)
+
+        # Subplot 1: Altitude vs Time
+        axes[0, 0].plot(productivty_mission_profiles[index1][index2[0]][0][0], productivty_mission_profiles[index1][index2[0]][0][1], label="Loaded") 
+        axes[0, 0].plot(productivty_mission_profiles[index1][index2[0]][1][0], productivty_mission_profiles[index1][index2[0]][1][1], label="Unloaded") 
+        axes[0, 0].set_title('Altitude vs Time')  
+        axes[0, 0].set_xlabel('Time (s)')  
+        axes[0, 0].set_ylabel('Altitude (m)') 
+        axes[0, 0].legend()
+        axes[0, 0].grid(True)
+
+        # Subplot 2: Velocity vs Time
+        axes[0, 1].plot(productivty_mission_profiles[index1][index2[0]][0][0], productivty_mission_profiles[index1][index2[0]][0][2], label="Loaded") 
+        axes[0, 1].plot(productivty_mission_profiles[index1][index2[0]][1][0], productivty_mission_profiles[index1][index2[0]][1][2], label="Unloaded") 
+        axes[0, 1].set_title('Velocity vs Time')  
+        axes[0, 1].set_xlabel('Time (s)')  
+        axes[0, 1].set_ylabel('Velocity (m/s)') 
+        axes[0, 1].legend()
+        axes[0, 1].grid(True)
+
+        # Subplot 3: Thrust vs Time
+        axes[0, 2].plot(productivty_mission_profiles[index1][index2[0]][0][0], productivty_mission_profiles[index1][index2[0]][0][3], label="Loaded") 
+        axes[0, 2].plot(productivty_mission_profiles[index1][index2[0]][1][0], productivty_mission_profiles[index1][index2[0]][1][3], label="Unloaded") 
+        axes[0, 2].set_title('Thrust vs Time')  
+        axes[0, 2].set_xlabel('Time (s)')  
+        axes[0, 2].set_ylabel('Thrust (N)') 
+        axes[0, 2].legend()
+        axes[0, 2].grid(True)
+
+        # Subplot 4: Altitude vs Distance
+        axes[1, 0].plot(productivty_mission_profiles[index1][index2[0]][0][5], productivty_mission_profiles[index1][index2[0]][0][1], label="Loaded") 
+        axes[1, 0].plot(productivty_mission_profiles[index1][index2[0]][1][5], productivty_mission_profiles[index1][index2[0]][1][1], label="Unloaded") 
+        axes[1, 0].set_title('Altitude vs Distance')  
+        axes[1, 0].set_xlabel('Distance (m)')  
+        axes[1, 0].set_ylabel('Altitude (m)') 
+        axes[1, 0].legend()
+        axes[1, 0].grid(True)
+
+        # Subplot 5: Velocity vs Distance
+        axes[1, 1].plot(productivty_mission_profiles[index1][index2[0]][0][5], productivty_mission_profiles[index1][index2[0]][0][2], label="Loaded") 
+        axes[1, 1].plot(productivty_mission_profiles[index1][index2[0]][1][5], productivty_mission_profiles[index1][index2[0]][1][2], label="Unloaded") 
+        axes[1, 1].set_title('Velocity vs Distance')  
+        axes[1, 1].set_xlabel('Distance (m)')  
+        axes[1, 1].set_ylabel('Velocity (m/s)') 
+        axes[1, 1].legend()
+        axes[1, 1].grid(True)
+
+        # Subplot 6: Thrust vs Distance
+        axes[1, 2].plot(productivty_mission_profiles[index1][index2[0]][0][5], productivty_mission_profiles[index1][index2[0]][0][3], label="Loaded") 
+        axes[1, 2].plot(productivty_mission_profiles[index1][index2[0]][1][5], productivty_mission_profiles[index1][index2[0]][1][3], label="Unloaded") 
+        axes[1, 2].set_title('Thrust vs Distance')  
+        axes[1, 2].set_xlabel('Distance (m)')  
+        axes[1, 2].set_ylabel('Thrust (N)') 
+        axes[1, 2].legend()
+        axes[1, 2].grid(True)
+
+        # Subplot 7: Angle of Attack vs Time
+        axes[2, 0].plot(loaded_cruise_time, np.degrees(productivty_mission_profiles[index1][index2[0]][0][11]), label="Loaded") 
+        axes[2, 0].plot(unloaded_cruise_time, np.degrees(productivty_mission_profiles[index1][index2[0]][1][11]), label="Unloaded") 
+        axes[2, 0].set_title('Angle of Attack vs Time')  
+        axes[2, 0].set_xlabel('Time (s)')  
+        axes[2, 0].set_ylabel('Angle of attack (deg)') 
+        axes[2, 0].legend()
+        axes[2, 0].grid(True)
+
+        # Subplot 8: Total Thrust vs Time
+        axes[2, 1].plot(productivty_mission_profiles[index1][index2[0]][0][0], np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12])), label="Loaded") 
+        axes[2, 1].plot(productivty_mission_profiles[index1][index2[0]][1][0], np.hstack((productivty_mission_profiles[index1][index2[0]][1][7], productivty_mission_profiles[index1][index2[0]][1][10], productivty_mission_profiles[index1][index2[0]][1][12])), label="Unloaded") 
+        axes[2, 1].set_title('Total Thrust vs Time')  
+        axes[2, 1].set_xlabel('Time (s)')  
+        axes[2, 1].set_ylabel('Total Thrust (N)') 
+        axes[2, 1].legend()
+        axes[2, 1].grid(True)
+
+        # Subplot 9: Power vs Time
+        axes[2, 2].plot(productivty_mission_profiles[index1][index2[0]][0][0], productivty_mission_profiles[index1][index2[0]][0][-1]/g, label="Loaded") 
+        axes[2, 2].plot(productivty_mission_profiles[index1][index2[0]][1][0], productivty_mission_profiles[index1][index2[0]][1][-1]/g, label="Unloaded") 
+        axes[2, 2].set_title('Acceleration vs Time')  
+        axes[2, 2].set_xlabel('Time (s)')  
+        axes[2, 2].set_ylabel('Acceleration (m/s^2)') 
+        axes[2, 2].legend()
+        axes[2, 2].grid(True)
+
+        plt.show()
 
 
+        print("\nEverything from this point on is obtained with the numerical power method")
 
+        loaded_climb_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][0][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+        unloaded_climb_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][1][7]) / number_of_propellers, vertical_climb_speed] #Using the average of the climb thrust profile
+        loaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][0][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][0][15]), np.mean(productivty_mission_profiles[index1][index2[0]][0][16])] #Using average value of thrust and velocities
+        unloaded_cruise_mission = [np.mean(productivty_mission_profiles[index1][index2[0]][1][10]) / number_of_propellers, np.mean(productivty_mission_profiles[index1][index2[0]][1][15]), np.mean(productivty_mission_profiles[index1][index2[0]][1][16])] #Using average value of thrust and velocities
+        missions_list = [loaded_cruise_mission, unloaded_cruise_mission, loaded_climb_mission, unloaded_climb_mission]
+        
+        print("Mission [thrust, normal velocity, tangential velocity]")
+        print("Loaded cruise mission", missions_list[0])
+        print("Unloaded cruise mission", missions_list[1])
+        print("Loaded climb mission", missions_list[2])
+        print("Unloaded climb mission", missions_list[3])
+        propeller_values = powers(D=productivty_mission_profiles[index1][index2[0]][3][0][index2[1]], T_hv=(loaded_cruise_total_thrust[index1] / number_of_propellers), lst=missions_list, wind_lst=[1, -1])
+
+        radial_position_values = propeller_values[0]
+        chord_values = propeller_values[1] #m
+        twist_values = propeller_values[2] #rad
+        mean_propeller_lift_coefficient = propeller_values[3]
+        loaded_hover_power = propeller_values[4] #W
+        unloaded_hover_power = loaded_hover_power * np.sqrt(unloaded_cruise_total_thrust[index1]/loaded_cruise_total_thrust[index1]) #W (Scale the hover power for the unloaded one)
+        loaded_climb_power = propeller_values[5][0][0] #W
+        loaded_climb_blade_drag = propeller_values[5][0][1] #N
+        unloaded_climb_power = propeller_values[6][0][0] #W
+        unloaded_climb_blade_drag = propeller_values[6][0][1] #N
+        loaded_descent_power = loaded_hover_power #W
+        loaded_descent_blade_drag = loaded_climb_blade_drag #N
+        unloaded_descent_power = unloaded_hover_power #W
+        unloaded_descent_blade_drag = unloaded_climb_blade_drag #N
+        loaded_cruise_power = propeller_values[5][0][0] #W
+        loaded_cruise_blade_drag = propeller_values[5][0][1] #N
+        unloaded_cruise_power = propeller_values[8][0][0] #W
+        unloaded_cruise_blade_drag = propeller_values[8][0][1] #N     
+
+        print("chord", chord_values)
+        print("twist", twist_values)
+
+        """
+        print("Masses (numerical)")
+        print("fuselage", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][0])
+        print("motor 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][1])
+        print("blade 1 ", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][2])
+        print("blade 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][3])
+        print("motor 3", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][4])
+        print("motor controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][5])
+        print("fuselage 3 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][6])
+        print("landing gear", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][7])
+        print("flight controller", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][8])
+        print("avionics", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][9])
+        print("furnishings", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][10])
+        print("single battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][0])
+        print("total battery mass", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][0][index2[2]][1][1])
+        print("Beams mass (set as 0 for now)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][1][11])
+        print("propeller diameter", productivty_mission_profiles[index1][index2[0]][3][0][index2[1]])
+        print("propeller RPM", productivty_mission_profiles[index1][index2[0]][3][2][index2[1]] * 9.5493)
+        print("Maximum thrust\n", np.max(np.hstack((productivty_mission_profiles[index1][index2[0]][0][7], productivty_mission_profiles[index1][index2[0]][0][10], productivty_mission_profiles[index1][index2[0]][0][12]))))
+
+
+        print("Class II OEM")
+
+        print("mission 2")
+        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][0])
+        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][1])
+
+        print("Class II MTM")
+
+        print("mission 2")
+        print("Method 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][2])
+        print("Method 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][3])
+
+        
+        print("productivity ratio 1 (not used)", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][6])
+        print("productivity ratio 3\n", productivty_mission_profiles[index1][index2[0]][3][6][index2[1]][3][index2[2]][1][7])
+        """
+        print("\nMean propeller lift coefficient", mean_propeller_lift_coefficient)
+
+        print("\nAverage loaded powers (numerical method)")
+        print("cruise", loaded_cruise_power*number_of_propellers)
+        print("hover", loaded_hover_power*number_of_propellers)
+        print("climb", loaded_climb_power*number_of_propellers)
+        print("descent", loaded_descent_power*number_of_propellers)
+        
+        print("\nAverage unloaded powers (numerical method)")
+        print("cruise", unloaded_cruise_power*number_of_propellers)
+        print("hover", unloaded_hover_power*number_of_propellers)
+        print("climb", unloaded_climb_power*number_of_propellers)
+        print("descent", unloaded_descent_power*number_of_propellers)
+        
+
+        plt.plot(radial_position_values, chord_values)
+        plt.xlabel("Radial position")
+        plt.ylabel("Chord (m)")
+        plt.title("Chord distribution of the propeller")
+        plt.show()
+
+
+        plt.plot(radial_position_values, twist_values * (360/(2*np.pi)))
+        plt.xlabel("Radial position")
+        plt.ylabel("Twist (degree)")
+        plt.title("Twist distribution of the propeller")
+        plt.show()
+        
+
+        
 
 mass_list = []
 for j in range(len(class_II_maximum_take_off_mass_evolution)):

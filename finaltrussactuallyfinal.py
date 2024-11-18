@@ -134,7 +134,7 @@ def structure_config_loop(T, L, sigmaY, rho, E, v, t_min, t_max, d_min, d_max,
 
 
 # Main optimization function
-def optimize_structure(T=833, L=1.8, sigmaY=280, rho=2770, htruss=0.5, E=71*10**9, v=0.33, 
+def optimize_structure(T=5000, L=1.8, sigmaY=280, rho=2770, htruss=0.5, E=71*10**9, v=0.33, 
                        t_min=0.0005, t_max=0.006, d_min=0.02, d_max=0.1, 
                        ttruss_min=0.001, ttruss_max=0.009, dtruss_min=0.07, dtruss_max=0.1, 
                        weight_deflection=0.1, weight_mass=0.5, weight_stress=0.1, weight_buckling=0.3, 
@@ -144,14 +144,16 @@ def optimize_structure(T=833, L=1.8, sigmaY=280, rho=2770, htruss=0.5, E=71*10**
                                                    ttruss_min, ttruss_max, dtruss_min, dtruss_max, truss=truss)
     return best_params
 
-"""
-# Example usage:
-configuration = int(input("Select configuration: No truss (1), Truss (2): "))
-truss_option = True if configuration == 2 else False
-result = optimize_structure(truss=truss_option)
 
-print("\nOptimal Configuration:")
-for key, value in result.items():
-    print(f"{key}: {value}")
-"""
+# Example usage:
+#configuration = int(input("Select configuration: No truss (1), Truss (2): "))
+#truss_option = True if configuration == 2 else False
+#result = optimize_structure(T=5000, L=1.8, truss=True)
+#print(result)
+#print(result["mass"])
+
+#print("\nOptimal Configuration:")
+#for key, value in result.items():
+#    print(f"{key}: {value}")
+
 
