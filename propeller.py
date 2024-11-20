@@ -276,7 +276,7 @@ def powers(D, T_hv, lst, wind_lst):
                 #print()
 
                 omega*=np.sqrt(T_conv/T)
-            var_lst.append([P, blade_drag])
+            var_lst.append([P, blade_drag, omega])
         powers.append(var_lst)
     return powers
 
