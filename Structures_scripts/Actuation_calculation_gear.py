@@ -7,7 +7,7 @@ m_motor = 10 # mass at end of beam
 L = 1  # length
 I = (1/3) * m_rod * L**2+ m_motor*L**2  # Moment of inertia
 
-theta_f = (4/9) * np.pi  # Final angle to cover
+theta_f = (117/180) * np.pi  # Final angle to cover
 t_f = 30  # Total time  
 angular_freq= 2*np.pi/(t_f) # Angular frequency
 A = theta_f/(angular_freq*t_f-angular_freq**2*np.sin(angular_freq*t_f))
