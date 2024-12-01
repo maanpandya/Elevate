@@ -42,7 +42,6 @@ propeller_beam_pin_width_position = 0.5 #m (Design choice, Noam)
 propeller_height_difference = 0.2 #m (Design choice, Noam)
 propeller_diameter_clearance = 0.2 #m (Design choice, Noam)
 number_of_iterations = 15
-airframe_equivalent_flat_plate_area = 0.808256 #m^2 (equivalent flat plate area source)
 propeller_hub_height = 0.2 #m
 
 plot_sample_productivity_mission_profile = False
@@ -91,7 +90,8 @@ for ñ in range(number_of_iterations):
     maximum_maneuvering_thrust_per_propeller = maximum_maneuvering_total_thrust / number_of_propellers #N
     loaded_cruise_total_thrust = class_I_maximum_take_off_mass * g #N (Vertical thrust component for L=W)
     unloaded_cruise_total_thrust = class_I_operational_empty_mass * g #N (Vertical thrust component for L=W)
-    
+    airframe_equivalent_flat_plate_area = 0.092903 * ((13/50) * np.sqrt(class_I_maximum_take_off_mass * 2.204622622)) #m^2 (equivalent flat plate area source)
+
     print("starting iteration OEM", class_I_operational_empty_mass[51])
     print("starting iteration MTM", class_I_maximum_take_off_mass[51])
     print("starting loaded thrust", loaded_cruise_total_thrust[51])
@@ -138,7 +138,7 @@ for ñ in range(number_of_iterations):
         for k in range(len(cruise_velocity)):
 
             #Loaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_maximum_take_off_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_maximum_take_off_mass[h], airframe_equivalent_flat_plate_area[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, loaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
@@ -162,7 +162,7 @@ for ñ in range(number_of_iterations):
             loaded_mission_profile = [time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise_vertical, thrust_cruise_horizontal, thrust_cruise, cruise_angle_of_attack, thrust_descent, velocity_climb, velocity_cruise, rotor_normal_cruise_velocity, rotor_tangential_cruise_velocity, velocity_descent, acceleration]
             
             #Unloaded mission profile
-            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_operational_empty_mass[h], airframe_equivalent_flat_plate_area, climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
+            time, altitude, velocity, thrust, power, horizontal_distance, vertical_distance, thrust_climb, thrust_cruise, thrust_descent, velocity_climb, velocity_cruise, velocity_descent, acceleration = generate_data(class_I_operational_empty_mass[h], airframe_equivalent_flat_plate_area[h], climb_velocity, cruise_velocity[k], climb_velocity, cruise_height, mission_distance, cruise_height, max_acceleration, max_acceleration, air_density)
             thrust_cruise_vertical = np.full(thrust_cruise.shape, unloaded_cruise_total_thrust[h])
             thrust_cruise_horizontal = thrust_cruise
             thrust_cruise = np.sqrt(thrust_cruise_horizontal*thrust_cruise_horizontal + thrust_cruise_vertical*thrust_cruise_vertical)
@@ -351,7 +351,7 @@ for ñ in range(number_of_iterations):
                     cruise_advance_ratio = productivty_mission_profiles[n][j][2] / blade_tip_velocity
                     induced_cruise_power_coefficient = cruise_correction_factor * cruise_thrust_coefficient * cruise_induced_velocity_inflow_factor
                     cruise_profile_power_coefficient = 0.125 * rotor_solidity * blade_profile_drag_coefficient * (1 + cruise_blade_profile_drag_correction_factor * cruise_advance_ratio * cruise_advance_ratio)
-                    cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area) / (productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
+                    cruise_parasitic_drag_power_coefficient = (0.5 * cruise_advance_ratio**3 * airframe_equivalent_flat_plate_area[n]) / (productivty_mission_profiles[n][j][3][0][l] * number_of_propellers)
                     cruise_induced_power = induced_cruise_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
                     cruise_profile_power = cruise_profile_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W
                     cruise_parasitic_power = cruise_parasitic_drag_power_coefficient * air_density * productivty_mission_profiles[n][j][3][0][l] * number_of_propellers * blade_tip_velocity**3 #W

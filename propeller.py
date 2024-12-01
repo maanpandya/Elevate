@@ -13,7 +13,7 @@ dyn_viscosity = 1.789e-5
 kin_viscosity = dyn_viscosity/rho
 a = 340
 B=2
-foil = 'dae11.DAT'
+foil = 'e395.DAT'
 foilpath = foil.replace(" ", "_")
 
 def design(D, T_hv, V):
@@ -89,8 +89,8 @@ def design(D, T_hv, V):
     #plt.plot(r, r**2*np.sqrt(F))
     #plt.plot(r, rot_interf)
     #plt.show()
-    print(c)
-    print(beta)
+    #print(c)
+    #print(beta)
     return r, c, beta, phi, Re, omega, P, cl_mean
 
 def powers(D, T_hv, lst, wind_lst):
@@ -177,9 +177,9 @@ def powers(D, T_hv, lst, wind_lst):
                 C_T_prime[-1] = C_T_prime[-2]
                 C_P_prime[-1] = C_P_prime[-2]
 
-                plt.plot(xi, C_l)
-                plt.title(f'baseline, omega={omega}')
-                plt.show()
+                #plt.plot(xi, C_l)
+                #plt.title(f'baseline, omega={omega}')
+                #plt.show()
 
                 C_T = np.trapz(C_T_prime, x=xi)
                 C_P = np.trapz(C_P_prime, x=xi)
@@ -248,7 +248,7 @@ def powers(D, T_hv, lst, wind_lst):
                     C_P_prime[-1] = C_P_prime[-2]
                     H_prime=0.5*rho*W**2*B*c*C_x
 
-                    plt.plot(xi, a_prime)
+                    #plt.plot(xi, a_prime)
 
 
                     C_T=np.trapz(C_T_prime, x=xi)
@@ -262,13 +262,13 @@ def powers(D, T_hv, lst, wind_lst):
 
                     #plt.plot(xi, phi)
 
-                plt.title(f'psi={psi}')
-                plt.show()
+                #plt.title(f'psi={psi}')
+                #plt.show()
                 #print(C_P_prime)
                 #print(f'P: {P}')
                 #print(f'T: {T}')
                 #print(f'blade_drag: {blade_drag}')
-                print()
+                #print()
                 #plt.title(f'omega={omega}, psi={psi}')
                 #plt.show()
                 #print(P)
@@ -282,5 +282,5 @@ def powers(D, T_hv, lst, wind_lst):
 
 #print(powers(D=2, T_hv=583, lst=[[600.2130211835558, 4.941286552985221, 29.687954154618136], [360.9971821340844, 7.697425215730051, 29.062173380815263], [592.4494820678754, 5], [350.5568701406026,5]], wind_lst=[1, -1]))
 
-print(design(2, 600, 0.001))
+#print(design(2, 600, 0.001))
 
