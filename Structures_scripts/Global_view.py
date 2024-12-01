@@ -205,6 +205,7 @@ bearing_safety_factor = calculate_bearing_failure(diameter_pin, lug_thickness)
 #Weight Calculation
 def total_weight(density_hinge, density_bolt, beam_length, sleeve_height, lug_thickness, bolt_head_height, nut_height, bearing_thickness, diameter_pin, thread_height):
     volume_pin=np.pi*(diameter_pin/2)**2*(2 * lug_thickness + sleeve_height + bolt_head_height + nut_height)
+    print(2 * lug_thickness + sleeve_height + bolt_head_height + nut_height)
     volume_lug= lug_thickness*lug_width
     volume_bearing= bearing_thickness*diameter_pin
     volume_sleeve= sleeve_height*center_lug_hole
