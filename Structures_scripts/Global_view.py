@@ -80,7 +80,36 @@ def calculate_bolt_parameters(thrust, safety_factor, beam_length, sleeve_height,
     y_shear[(x > bolt_head_height + lug_thickness + sleeve_height - bearing_thickness * 0.5) & (x <= total_bolt_length)] = -F_lug
     y_shear[(x > total_bolt_length - nut_height - 0.5 * lug_thickness)] = 0  # Set shear force to 0 after total_bolt_length
 
+
+# Integrate shear force to get bending moment
+    y_moment = np.zeros_like(x)
+    y_moment = cumulative_trapezoid(y_shear, x, initial=0)
+
     # Plotting the shear force diagram
+
+    fig, ax1 = plt.subplots()
+
+    # Plotting the shear force diagram
+    ax1.plot(x, y_shear, color='b', label='Shear Force')
+    #ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('Shear Force [N]')
+    ax1.set_xlabel('x [m]')
+    ax1.tick_params(axis='y', labelcolor='b')
+    #ax1.grid(True)
+
+    # Plotting the bending moment diagram
+    ax2=ax1.twinx()
+    ax2.plot(x, y_moment, color='r', label='Bending Moment')
+    #ax2.set_xlabel('x [m]')
+    ax2.set_ylabel('Bending Moment [Nm]')
+    ax2.tick_params(axis='y', labelcolor='r')
+
+    fig.legend(loc='upper left', bbox_to_anchor=(0.2, 0.9))
+    plt.title('Bolt Shear and Bending Moment Diagrams')
+    #ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
     '''
     plt.figure()
     plt.plot(x, y_shear)
@@ -88,10 +117,8 @@ def calculate_bolt_parameters(thrust, safety_factor, beam_length, sleeve_height,
     plt.ylabel('Shear Force [N]')
     plt.title('Internal Shear Force Diagram')
     plt.grid(True)
+    plt.show()
     '''
-    # Integrate shear force to get bending moment
-    y_moment = np.zeros_like(x)
-    y_moment = cumulative_trapezoid(y_shear, x, initial=0)
 
     # Plotting the bending moment diagram
     '''
@@ -102,7 +129,7 @@ def calculate_bolt_parameters(thrust, safety_factor, beam_length, sleeve_height,
     plt.title('Internal Bending Moment Diagram')
     plt.grid(True)
     plt.show()
-'''
+    '''
     # find the maximum internal shear and moment
     max_internal_shear = max(abs(y_shear))
     max_internal_moment = max(abs(y_moment))
